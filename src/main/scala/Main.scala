@@ -16,7 +16,8 @@ object ChiselMain {
     //chiselMain(args, () => Module(new RosettaWrapper(Settings.myInstFxn)))
     //chiselMainTest(args, () => Module(new Max(4, 8))){c => new MaxTests(c)}
     //chiselMainTest(args, () => Module(new Sum(9,8))){c => new SumTests(c)}
-    chiselMainTest(args, () => Module(new Mux2())){c => new Mux2Tests(c)}
+    //chiselMainTest(args, () => Module(new Mux2())){c => new Mux2Tests(c)}
+    chiselMainTest(args, () => Module(new weightTest(4,Array[Int](10,20,30,40), 8))){c => new weightTestTests(c)}
   }
 }
 
