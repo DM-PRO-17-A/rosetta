@@ -20,6 +20,17 @@ bool Run_TestRegOps(WrapperRegDriver * platform) {
   return (a+b) == t.get_sum();
 }
 
+bool Run_ImageLoader(WrapperRegDriver * platform) {
+    ImageLoader img(platform);
+
+    img.set_write_enable(1);
+    img.set_write_addr(0);
+    img.set_write_data(1234);
+    
+    img.set_read_addr(0);
+    cout << img.read_data;
+}
+
 int main()
 {
   WrapperRegDriver * platform = initPlatform();
