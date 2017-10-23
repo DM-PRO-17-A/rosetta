@@ -20,6 +20,7 @@ object ChiselMain {
     //chiselMainTest(args, () => Module(new Comparator(8))){c => new ComparatorTest(c)}
     //chiselMainTest(args, () => Module(new DotProduct(4,2))){c => new DotProductTests(c)}
     //chiselMainTest(args, () => Module(new ROM())){c => new ROMTests(c)}
+    chiselMainTest(args, () => Module(new Pooling(1, 2, 4, 1))){c => new PoolingTests(c)}
   }
 }
 
