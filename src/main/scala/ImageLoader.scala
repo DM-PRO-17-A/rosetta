@@ -30,10 +30,14 @@ class ImageLoader(numMemLines: Int, dataWidth: Int)  extends RosettaAccelerator 
 
 class ImageLoaderTests(c: ImageLoader) extends Tester(c) {
     poke(c.io.write_enable, 1)
-    poke(c.io.write_addr, 0)
+    poke(c.io.write_addr, 16)
     poke(c.io.write_data, 1234)
-    poke(c.io.read_addr, 0)
+    poke(c.io.read_addr, 16)
     step(1)
     peek(c.io.read_data)
+    poke(c.io.read_addr, 1)
+    step(1)
+    peek(c.io.read_data)
+    peek(c.io.write_addr)
 
 }
