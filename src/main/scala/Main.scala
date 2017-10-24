@@ -13,7 +13,7 @@ object Settings {
 // output products. all cmdline arguments are passed straight to Chisel.
 object ChiselMain {
   def main(args: Array[String]): Unit = {
-    chiselMain(args, () => Module(new RosettaWrapper(Settings.myInstFxn)))
+    //chiselMain(args, () => Module(new RosettaWrapper(Settings.myInstFxn)))
     //chiselMainTest(args, () => Module(new Max(4, 1))){c => new MaxTests(c)}
     //chiselMainTest(args, () => Module(new Sum(9,8))){c => new SumTests(c)}
     //chiselMainTest(args, () => Module(new Mux2())){c => new Mux2Tests(c)}
@@ -24,6 +24,7 @@ object ChiselMain {
     //chiselMainTest(args, () => Module(new DotProduct(5, 8))){c => new DotProductTests(c)}
     //chiselMainTest(args, () => Module(new FullyConnected("/test_data/fc1.txt", 64, 1024, 32, 64, 8))){c => new FullyConnectedTests(c)}
     //chiselMainTest(args, () => Module(new ImageQueue(8, 128, 32))){c => new ImageQueueTests(c)}
+    chiselMainTest(args, () => Module(new ConvolutionLayer(8, 1, 1))){c => new ConvolutionLayerTests(c)}
   }
 }
 
