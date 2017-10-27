@@ -31,15 +31,15 @@ class FullyConnected(kernels: Int, weights: Array[Array[Int]], input_size: Int, 
         acc(weight_counter + UInt(k)) := acc(input_counter) + dotprod.data_out
 
         // This is pretty ugly
-        when(input_counter === UInt(output_size)) {
-            input_counter := UInt(0)
-        } .otherwise {
-            input_counter := input_counter + input_size
-        }
         when(weight_counter === UInt(weight_size)) {
             weight_counter := UInt(0)
+            when(input_counter === UInt(output_size)) {
+                input_counter := UInt(0)
+            } .otherwise {
+                input_counter := input_counter + UInt(input_size)
+            }
         } .otherwise {
-            weight_counter := weight_counter + kernels
+            weight_counter := weight_counter + UInt(kernels)
         }
     }
 
@@ -50,9 +50,16 @@ class FullyConnected(kernels: Int, weights: Array[Array[Int]], input_size: Int, 
 
 class FullyConnectedTests(c: FullyConnected) extends Tester(c) {
     val test_array = Array[BigInt](1,1,1,1)
+    val step_size = 2
 
-    poke(c.io.input_data, test_array)
-    step(1)
+    for(i <- 0 until 4/step_size){
+        poke(c.io.input_data, test_array.slice(i,step_size))
+        peek(c.acc)
+        peek(c.weight_counter)
+        if(i < 4){
+            step(1)
+        }
+    }
     peek(c.io.output_data)
     peek(c.weight_counter)
 }
