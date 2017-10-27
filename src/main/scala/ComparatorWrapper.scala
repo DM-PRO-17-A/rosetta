@@ -2,31 +2,48 @@ package rosetta
 
 import Chisel._
 
-class ComparatorWrapper(dataWidth: Int, pixelsPerSlice: Int, slicesPerIteration: Int, thresholds: Array[Int]) extends RosettaAccelerator {
+class ComparatorWrapper(dataWidth: Int, valuesPerIteration: Int, thresholds: Array[Int]) extends RosettaAccelerator {
   val numMemPorts = 0
   val io = new RosettaAcceleratorIF(numMemPorts) {
     // values to be compared
-    val input = Vec.fill(pixelsPerSlice*slicesPerIteration){UInt(INPUT, dataWidth)}
-    // values to be sent to pooling
-    val output = Vec.fill(pixelsPerSlice){UInt(INPUT, dataWidth)}
+    val input = Vec.fill(valuesPerIteration){UInt(INPUT, dataWidth)}
+    val output = Vec.fill(valuesPerIteration){UInt(OUTPUT, dataWidth)}
   }
 
-  val w = Vec(weights.map(s => UInt(s, data_width)))
+  val t = Vec(thresholds.map(s => UInt(s, dataWidth)))
+  val counter = Reg(init=UInt(0))
 
-  for(j <- 0 to pixelsPerSlice){
+  for(i <- 0 to valuesPerIteration) {
+    io.output := UInt(0)
+  }
+
+  for(j <- 0 until valuesPerIteration){
       val in = Module(new Comparator(dataWidth)).io
-      in.in0 := 
+      in.in0 := io.input(UInt(j))
+      printf("%d\n",t(counter + UInt(j)))
+      in.in1 := t(counter + UInt(j))
+      io.output(UInt(j)) := in.output
     }
+
+  when(counter === UInt(thresholds.length)) {
+    counter := UInt(0)
+  } .otherwise {
+    counter := counter + UInt(valuesPerIteration)
+  }
+
 
   
 }
 
 class ComparatorWrapperTest(c: ComparatorWrapper) extends Tester(c) {
-  val test = Array[Int](1, 2, 3, 4)
-  poke(c.io.input, in0)
-  poke(c.io.in1, in1)
-  expect(c.io.output, 1)
+  val test = Array[BigInt](1, 2)
+  val test2 = Array[BigInt](3, 4)
+  poke(c.io.input, test)
   peek(c.io.output)
+  step(1)
+  poke(c.io.input, test2)
+  peek(c.io.output)
+  //expect(c.io.output, Array(1, 0, 1, 0))
 }
 
 
