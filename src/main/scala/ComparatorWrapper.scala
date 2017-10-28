@@ -7,6 +7,7 @@ class ComparatorWrapper(dataWidth: Int, valuesPerIteration: Int, thresholds: Arr
   val io = new RosettaAcceleratorIF(numMemPorts) {
     // values to be compared
     val input = Vec.fill(valuesPerIteration){UInt(INPUT, dataWidth)}
+    // values to be output
     val output = Vec.fill(valuesPerIteration){UInt(OUTPUT, dataWidth)}
   }
 
