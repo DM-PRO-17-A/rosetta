@@ -24,7 +24,10 @@ object ChiselMain {
     //chiselMainTest(args, () => Module(new DotProduct(5, 8))){c => new DotProductTests(c)}
     //chiselMainTest(args, () => Module(new FullyConnected("/test_data/fc1.txt", 64, 1024, 32, 64, 8))){c => new FullyConnectedTests(c)}
     //chiselMainTest(args, () => Module(new ImageQueue(8, 128, 32))){c => new ImageQueueTests(c)}
-    chiselMainTest(args, () => Module(new ConvolutionLayer(8, 1, 1))){c => new ConvolutionLayerTests(c)}
+    //chiselMainTest(args, () => Module(new ConvolutionLayer(8, 1, 1))){c => new ConvolutionLayerTests(c)}
+    //chiselMainTest(args, () => Module(new DotProduct(75, 8))){c => new DotProductTests(c)}
+    //chiselMainTest(args, () => Module(new ROM())){c => new ROMTests(c)}
+    chiselMainTest(args, () => Module(new ConvolutionLayer(8, 1, 10))){c => new ConvolutionLayerTests(c)}
   }
 }
 

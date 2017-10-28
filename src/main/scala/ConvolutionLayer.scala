@@ -10,7 +10,8 @@ class ConvolutionLayer(input_width: Int, windows: Int, filters: Int) extends Ros
         val input_windows = Vec.fill(windows){Vec.fill(window_size){Bits(INPUT, input_width)}}
 
         // Bits length is same as output from a single DP, ie. a filter applied to a window
-        val output = Vec.fill(windows * filters){Bits(OUTPUT, math.ceil(math.log(window_size) / math.log(2)).toInt + input_width + 1)}
+        val output = Vec.fill(windows * filters){Bits(OUTPUT, math.ceil(math.log(window_size * 2 ^ input_width) / math.log(2)).toInt + 1)}
+
     }
 
     // Load weights from file
@@ -20,9 +21,9 @@ class ConvolutionLayer(input_width: Int, windows: Int, filters: Int) extends Ros
       scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/weights/convolution1.txt")).getLines
 
       // How many bits for a brotha? Gotta do toFloat.toInt because of the number format. Could/should be changed w
-      .map(line => line.split(" ").map(f => if (f.toFloat.toInt == 1) Bits(1) else Bits(0))) // Map it to 1 or 0, because of DotProduct is implemented
+      .map(line => line.split(" ").map(i => if (i.toInt == 1) Bits(1) else Bits(0)))
 
-      .map(filter => Vec(filter)).toArray
+      .map(filter => Vec(filter.toArray)).toArray
     )
 
 
@@ -46,7 +47,7 @@ class ConvolutionLayer(input_width: Int, windows: Int, filters: Int) extends Ros
     // The switch takes cares of hooking up the right filters
     // for each iteration or "step"
     // Step is currently hard coded to be "1" and has to be replaced with a counter of some sort
-    val step = Bits(1)
+    val step = Bits(0)
     switch (step) {
       for (step <- 0 until steps) {
         is (Bits(step)) {
@@ -82,9 +83,14 @@ class ConvolutionLayer(input_width: Int, windows: Int, filters: Int) extends Ros
 }
 
 class ConvolutionLayerTests(c: ConvolutionLayer) extends Tester(c) {
+    val windows = 1
+    val filters = 10
     val lines = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/test_data/convolution1.txt")).getLines.toArray
     val input = lines(0).split(" ").map(f => BigInt(f.toInt))
-    val output = lines(1).split(" ").map(f => BigInt(f.toInt))
+    val outputs = lines.slice(1, filters + 1).map(f => BigInt(f.toInt))
+
     poke(c.io.input_windows(0), input)
-    expect(c.io.output, output)
+    for (f <- 0 until filters) {
+      expect(c.io.output(f), outputs(f))
+    }
 }
