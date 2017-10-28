@@ -24,11 +24,23 @@ class DotProduct(input_size: Int, input_width: Int) extends RosettaAccelerator {
 }
 
 class DotProductTests(c: DotProduct) extends Tester(c) {
-    val vec_1 = Array[BigInt](2,1,1,1)
-    val vec_1_1 = Array[BigInt](1,0,1,0)
-    val vec_2 = Array[BigInt](1,1,0,1)
+    val lines = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/test_data/dot_product_small.txt")).getLines.toArray
 
-    poke(c.io.vec_1, vec_1)
-    poke(c.io.vec_2, vec_2)
-    expect(c.io.data_out, 3)
+    0 until lines.length / 3 foreach {
+        it => {
+            val current = it * 3
+
+            val vec_1 = lines(current).split(" ").map(f => BigInt(f.toInt))
+            val vec_2 = lines(current + 1).split(" ").map(f => if (f.toInt == 1) BigInt(1) else BigInt(0))
+            val vec_2_orig = lines(current + 1).split(" ").map(f => BigInt(f.toInt))
+
+            val output = BigInt(lines(current + 2).toInt)
+            val calculated_output = (vec_1 zip vec_2_orig).map{case (i1: BigInt, i2: BigInt) => i1*i2}.reduceLeft(_ + _)
+
+            println(vec_1.mkString, vec_2.mkString, output, calculated_output)
+            poke(c.io.vec_1, vec_1)
+            poke(c.io.vec_2, vec_2)
+            expect(c.io.data_out, output)
+        }
+    }
 }
