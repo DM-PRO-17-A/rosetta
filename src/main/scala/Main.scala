@@ -27,7 +27,7 @@ object ChiselMain {
     //chiselMainTest(args, () => Module(new ConvolutionLayer(8, 1, 1))){c => new ConvolutionLayerTests(c)}
     //chiselMainTest(args, () => Module(new DotProduct(75, 8))){c => new DotProductTests(c)}
     //chiselMainTest(args, () => Module(new ROM())){c => new ROMTests(c)}
-    chiselMainTest(args, () => Module(new ConvolutionLayer(8, 1, 10))){c => new ConvolutionLayerTests(c)}
+    chiselMainTest(args, () => Module(new ConvolutionLayer(8, 4, 2))){c => new ConvolutionLayerTests(c)}
   }
 }
 
