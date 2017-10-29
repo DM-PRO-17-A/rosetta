@@ -14,7 +14,11 @@ class ImageLoader(numMemLines: Int, dataWidth: Int)  extends RosettaAccelerator 
     }
 
     val bram = Module(new DualPortBRAM(addrBits = log2Up(numMemLines), dataBits = dataWidth)).io
-    
+    println("TEST \n")
+    println(numMemLines)
+
+    val log2test = log2Up(numMemLines)
+    printf("log2test = %d", UInt(log2test))
     val write_port = bram.ports(0)
     write_port.req.addr := io.write_addr
     write_port.req.writeData := io.write_data
@@ -28,7 +32,41 @@ class ImageLoader(numMemLines: Int, dataWidth: Int)  extends RosettaAccelerator 
     io.signature := makeDefaultSignature()
 }
 
+class ImageQueue extends RosettaAccelerator {
+    val numMemPorts = 0
+    val io = new RosettaAcceleratorIF(numMemPorts) {
+        val queue_input = Flipped(Decoupled(Vec.fill(4){UInt(INPUT, width = 32)}))  //Valid and bits are inputs
+        val queue_output = (Decoupled(Vec.fill(4){UInt(OUTPUT, width = 32)}))       //Valid and bits are outputs.count
+        val queue_count = UInt(OUTPUT)
+    }
+
+    val testQueue = Module(new Queue(Vec.fill(4){UInt(width = 32)}, entries = 16))
+    //Queues the bits from queue_input
+    testQueue.io.enq <> io.queue_input
+    //Connects output to the dequed information from testQueue.
+    io.queue_output <> testQueue.io.deq
+    testQueue.io.count <> io.queue_count
+
+    /*
+    testList = [1,2,3,4]
+
+    def writeImage(image: List[Int]) Unit = {
+
+    }
+    */
+
+    //testQueue.io.enq.valid <> io.valid_input
+    //testQueue.io.deq.ready <> io.read_data
+
+
+
+
+
+}
+
+
 class ImageLoaderTests(c: ImageLoader) extends Tester(c) {
+    //peek(c.log2test)
     poke(c.io.write_enable, 1)
     poke(c.io.write_addr, 16)
     poke(c.io.write_data, 1234)
@@ -39,5 +77,25 @@ class ImageLoaderTests(c: ImageLoader) extends Tester(c) {
     step(1)
     peek(c.io.read_data)
     peek(c.io.write_addr)
+
+}
+
+class ImageQueueTests(c: ImageQueue) extends  Tester(c) {
+    poke(c.io.queue_input.bits, Array[BigInt](1,2,3,4))
+    poke(c.io.queue_input.valid, 1)
+    step(1)
+    poke(c.io.queue_input.bits, Array[BigInt](5,6,7,8))
+    poke(c.io.queue_input.valid, 1)
+    step(1)
+    peek(c.io.queue_count)
+    poke(c.io.queue_input.valid, 0)
+    step(1)
+    poke(c.io.queue_output.ready, 1)
+    peek(c.io.queue_output)
+    step(1)
+    peek(c.io.queue_output)
+    step(1)
+    peek(c.io.queue_count)
+    peek(c.io.queue_output)
 
 }
