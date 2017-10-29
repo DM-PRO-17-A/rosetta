@@ -34,21 +34,25 @@ class ImageLoader(numMemLines: Int, dataWidth: Int)  extends RosettaAccelerator 
 
 class ImageQueue extends RosettaAccelerator {
     val numMemPorts = 0
+    val vec_fill_size  = 4
     val io = new RosettaAcceleratorIF(numMemPorts) {
-        val queue_input = Flipped(Decoupled(Vec.fill(4){UInt(INPUT, width = 32)}))  //Valid and bits are inputs
-        val queue_output = (Decoupled(Vec.fill(4){UInt(OUTPUT, width = 32)}))       //Valid and bits are outputs.count
+        val queue_input = Flipped(Decoupled(Vec.fill(vec_fill_size){UInt(INPUT, width = 32)}))  //Valid and bits are inputs
+        val queue_output = (Decoupled(Vec.fill(vec_fill_size){UInt(OUTPUT, width = 32)}))       //Valid and bits are outputs.count
         val queue_count = UInt(OUTPUT)
+        val queue_write_enable = Bool(INPUT)
+
     }
 
-    val testQueue = Module(new Queue(Vec.fill(4){UInt(width = 32)}, entries = 16))
+    val testQueue = Module(new Queue(Vec.fill(vec_fill_size){UInt(width = 32)}, entries = 16))
     //Queues the bits from queue_input
     testQueue.io.enq <> io.queue_input
     //Connects output to the dequed information from testQueue.
     io.queue_output <> testQueue.io.deq
+    //Counts the number of elements in the queue
     testQueue.io.count <> io.queue_count
 
     /*
-    testList = [1,2,3,4]
+    testList = Array[BigInt][1,2,3,4]
 
     def writeImage(image: List[Int]) Unit = {
 
@@ -57,8 +61,13 @@ class ImageQueue extends RosettaAccelerator {
 
     //testQueue.io.enq.valid <> io.valid_input
     //testQueue.io.deq.ready <> io.read_data
-
-
+    /*
+    for ( i <- test ) {
+        poke(c.io.queue_input.bits, (UInt)i)
+        poke(c.io.queue_input.valid, 1)
+        step(1)
+    }
+    */
 
 
 
@@ -81,6 +90,7 @@ class ImageLoaderTests(c: ImageLoader) extends Tester(c) {
 }
 
 class ImageQueueTests(c: ImageQueue) extends  Tester(c) {
+
     poke(c.io.queue_input.bits, Array[BigInt](1,2,3,4))
     poke(c.io.queue_input.valid, 1)
     step(1)
@@ -97,5 +107,7 @@ class ImageQueueTests(c: ImageQueue) extends  Tester(c) {
     step(1)
     peek(c.io.queue_count)
     peek(c.io.queue_output)
+
+
 
 }
