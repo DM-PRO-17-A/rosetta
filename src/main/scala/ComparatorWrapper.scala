@@ -31,7 +31,6 @@ class ComparatorWrapper(dataWidth: Int, valuesPerIteration: Int, thresholds: Arr
       io.output.bits(UInt(j)) := in.output
     }
 
-
   // sets the counter to be in correct position for next iteration
   when(counter === UInt(thresholds.length)) {
     counter := UInt(0)
@@ -39,10 +38,8 @@ class ComparatorWrapper(dataWidth: Int, valuesPerIteration: Int, thresholds: Arr
   } .otherwise {
     counter := counter + UInt(valuesPerIteration)
   }
-
-
-  
 }
+
 
 class ComparatorWrapperTest(c: ComparatorWrapper) extends Tester(c) {
   val test = Array[BigInt](1)
@@ -53,13 +50,11 @@ class ComparatorWrapperTest(c: ComparatorWrapper) extends Tester(c) {
   peek(c.io.output)
   peek(c.counter)
   expect(c.io.output.bits(0), 0)
-
   step(1)
   poke(c.io.input, test2)
   peek(c.io.output)
   peek(c.counter)
   expect(c.io.output.bits(0), 1)
-
   step(1)
   poke(c.io.input, test3)
   peek(c.io.output)
@@ -70,7 +65,6 @@ class ComparatorWrapperTest(c: ComparatorWrapper) extends Tester(c) {
   peek(c.io.output)
   peek(c.counter)
   expect(c.io.output.bits(0), 0)
-
 }
 
 
