@@ -16,7 +16,7 @@ object Counter {
   }
 }
 
-class ConvolutionLayer(input_width: Int, windows: Int, filters: Int) extends RosettaAccelerator {
+class Convolution(input_width: Int, windows: Int, filters: Int) extends RosettaAccelerator {
     val window_size = 5*5*3
 
     val numMemPorts = 0
@@ -70,7 +70,7 @@ class ConvolutionLayer(input_width: Int, windows: Int, filters: Int) extends Ros
     }
 }
 
-class ConvolutionLayerTests(c: ConvolutionLayer) extends Tester(c) {
+class ConvolutionTests(c: Convolution) extends Tester(c) {
     val windows = 4
     val filters = 2
     val lines = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/test_data/convolution1.txt")).getLines.toArray
