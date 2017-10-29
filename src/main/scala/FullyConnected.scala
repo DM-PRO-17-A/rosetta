@@ -4,7 +4,7 @@ import Chisel._
 
 // These param names are really bad
 class FullyConnected(kernels: Int, weights: Array[Array[Int]], input_size: Int, weight_size: Int, output_size: Int, input_width: Int) extends RosettaAccelerator {
-    val output_width = math.ceil(math.log(input_size * 2 ^ input_width) / math.log(2)).toInt + 1
+    val output_width = math.ceil(math.log(input_size * 2 ^ input_width * weight_size) / math.log(2)).toInt + 1
     val numMemPorts = 0
     val io = new RosettaAcceleratorIF(numMemPorts){
         val input_data = Vec.fill(input_size){UInt(INPUT, input_width)}
@@ -30,8 +30,11 @@ class FullyConnected(kernels: Int, weights: Array[Array[Int]], input_size: Int, 
         }
         dotprod.vec_2 := w_slice
 
-        printf("k: %d, dp: %d\n", UInt(k), dotprod.data_out)
-        acc(output_counter + UInt(k)) := acc(output_counter + UInt(k)) + dotprod.data_out
+        when(output_counter === UInt(0)){
+            acc(UInt(k)) := dotprod.data_out
+        } .otherwise {
+            acc(output_counter + UInt(k)) := acc(output_counter + UInt(k)) + dotprod.data_out
+        }
 
         output_counter := output_counter + UInt(kernels)
         when(output_counter === UInt(output_size) - UInt(kernels)) {
@@ -53,17 +56,26 @@ class FullyConnected(kernels: Int, weights: Array[Array[Int]], input_size: Int, 
 
 class FullyConnectedTests(c: FullyConnected) extends Tester(c) {
     val test_array = Array[BigInt](20, 10, 2, 45)
+    val test_array_2 = Array[BigInt](1,2,3,4)
     val step_size = 2
 
     // This test is really ugly
-    poke(c.io.input_data, Array[BigInt](20,10))
+    poke(c.io.input_data, test_array)
     peek(c.acc)
     step(1)
-    poke(c.io.input_data, Array[BigInt](2, 45))
-    peek(c.acc)
-    step(1)
+//    poke(c.io.input_data, Array[BigInt](2, 45))
+//    peek(c.acc)
+//    step(1)
     peek(c.io.output_data)
     expect(c.io.output_data.bits(0), -33)
     expect(c.io.output_data.bits(1), 77)
     expect(c.io.output_data.bits(2), -77)
+    poke(c.io.input_data, test_array_2)
+    step(2)
+    peek(c.acc)
+    peek(c.io.output_data)
+    expect(c.io.output_data.bits(0), -2)
+    expect(c.io.output_data.bits(1), 10)
+    expect(c.io.output_data.bits(2), -10)
+
 }
