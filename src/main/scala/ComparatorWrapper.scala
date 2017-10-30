@@ -8,7 +8,7 @@ class ComparatorWrapper(dataWidth: Int, valuesPerIteration: Int, thresholds: Arr
     // values to be compared
     val input = Vec.fill(valuesPerIteration){UInt(INPUT, dataWidth)}
     // values to be output
-    val output = Decoupled(Vec.fill(valuesPerIteration){UInt(OUTPUT, dataWidth)})
+    val output = Decoupled(Vec.fill(valuesPerIteration){UInt(OUTPUT, 1)})
   }
 
   val t = Vec(thresholds.map(s => UInt(s, dataWidth)))
@@ -23,10 +23,10 @@ class ComparatorWrapper(dataWidth: Int, valuesPerIteration: Int, thresholds: Arr
   for(j <- 0 until valuesPerIteration){
       val in = Module(new Comparator(dataWidth)).io
       in.in0 := io.input(UInt(j))
-      printf("value being compared: ")
-      printf("%d\n", io.input(UInt(j)))
-      printf("threshold being compared against: ")
-      printf("%d\n", t(counter + UInt(j)))
+      // printf("value being compared: ")
+      // printf("%d\n", io.input(UInt(j)))
+      // printf("threshold being compared against: ")
+      // printf("%d\n", t(counter + UInt(j)))
       in.in1 := t(counter + UInt(j))
       io.output.bits(UInt(j)) := in.output
     }
