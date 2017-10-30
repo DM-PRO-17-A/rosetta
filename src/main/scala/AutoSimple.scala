@@ -14,7 +14,7 @@ class AutoSimple(dataWidth: Int, valuesPerIteration: Int, thresholds: Array[Int]
   val t = Vec(thresholds.map(s => UInt(s, dataWidth)))
 
   // sets all values in output to be 0, NECESSARY to avoid error
-  for(i <- 0 until 3072) {
+  for(i <- 0 until input_size) {
     io.output.bits := UInt(0)
   }
 
