@@ -32,18 +32,18 @@ class ImageLoader(numMemLines: Int, dataWidth: Int)  extends RosettaAccelerator 
     io.signature := makeDefaultSignature()
 }
 
-class ImageQueue extends RosettaAccelerator {
+class ImageQueue(queueDepth: Int, dataWidth: Int) extends RosettaAccelerator {
     val numMemPorts = 0
     val vec_fill_size  = 4
     val io = new RosettaAcceleratorIF(numMemPorts) {
-        val queue_input = Flipped(Decoupled(Vec.fill(vec_fill_size){UInt(INPUT, width = 32)}))  //Valid and bits are inputs
-        val queue_output = (Decoupled(Vec.fill(vec_fill_size){UInt(OUTPUT, width = 32)}))       //Valid and bits are outputs.count
+        val queue_input = Flipped(Decoupled(Vec.fill(vec_fill_size){UInt(INPUT, width = dataWidth)}))  //Valid and bits are inputs
+        val queue_output = (Decoupled(Vec.fill(vec_fill_size){UInt(OUTPUT, width = dataWidth)}))       //Valid and bits are outputs.count
         val queue_count = UInt(OUTPUT)
         val queue_write_enable = Bool(INPUT)
 
     }
 
-    val testQueue = Module(new Queue(Vec.fill(vec_fill_size){UInt(width = 32)}, entries = 16))
+    val testQueue = Module(new Queue(Vec.fill(vec_fill_size){UInt(width = dataWidth)}, entries = queueDepth))
     //Queues the bits from queue_input
     testQueue.io.enq <> io.queue_input
     //Connects output to the dequed information from testQueue.
@@ -52,13 +52,16 @@ class ImageQueue extends RosettaAccelerator {
     testQueue.io.count <> io.queue_count
 
     /*
-    testList = Array[BigInt][1,2,3,4]
+    testList = Array[BigInt][0, 0, 0, 255, 0, 0, 0, 255, 0, 0, 0, 255,]
 
     def writeImage(image: List[Int]) Unit = {
-
+        for ( i <- test ) {
+            poke(c.io.queue_input.bits, (UInt)i)
+            poke(c.io.queue_input.valid, 1)
+            step(1)
+        }
     }
     */
-
     //testQueue.io.enq.valid <> io.valid_input
     //testQueue.io.deq.ready <> io.read_data
     /*
@@ -107,6 +110,8 @@ class ImageQueueTests(c: ImageQueue) extends  Tester(c) {
     step(1)
     peek(c.io.queue_count)
     peek(c.io.queue_output)
+
+
 
 
 
