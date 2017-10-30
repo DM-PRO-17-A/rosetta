@@ -3,6 +3,7 @@ package rosetta
 import Chisel._
 import fpgatidbits.ocm._
 
+//BRAM example with test.
 class ImageLoader(numMemLines: Int, dataWidth: Int)  extends RosettaAccelerator {
     val numMemPorts = 0
     val io = new RosettaAcceleratorIF(numMemPorts) {
@@ -32,6 +33,9 @@ class ImageLoader(numMemLines: Int, dataWidth: Int)  extends RosettaAccelerator 
     io.signature := makeDefaultSignature()
 }
 
+
+//FPGA-queue
+//Needs logic for interacting with CPU and storing the image data correctly
 class ImageQueue(queueDepth: Int, dataWidth: Int) extends RosettaAccelerator {
     val numMemPorts = 0
     val vec_fill_size  = 4
@@ -110,6 +114,7 @@ class ImageQueueTests(c: ImageQueue) extends  Tester(c) {
     step(1)
     peek(c.io.queue_count)
     peek(c.io.queue_output)
+
 
 
 

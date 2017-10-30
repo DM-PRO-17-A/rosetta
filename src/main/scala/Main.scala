@@ -20,6 +20,7 @@ object ChiselMain {
     //chiselMainTest(args, () => Module(new Mux2())){c => new Mux2Tests(c)}
     //chiselMainTest(args, () => Module(new ImageLoader(10, 256))){c => new ImageLoaderTests(c)}
     chiselMainTest(args, () => Module(new ImageQueue(16, 24))){c => new ImageQueueTests(c)}
+    chiselMainTest(args, () => Module(new RegFile())){c => new RegFileTests(c)}
   }
 }
 
