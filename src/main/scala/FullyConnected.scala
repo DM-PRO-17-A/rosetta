@@ -15,10 +15,10 @@ class FullyConnected(kernels: Int, weights: Array[Array[Int]], input_size: Int, 
 
     val w = Vec(weights.map(s => Vec(s.map(t => UInt(t, 1)))))
 
-    val acc = Vec.fill(output_size){Reg(init=SInt(width=output_width))}
+    val acc = Vec.fill(output_size){Reg(init=SInt(0,width=output_width))}
 
-    val weight_counter = Reg(init=UInt(width=output_width))
-    val output_counter = Reg(init=UInt(width=output_width))
+    val weight_counter = Reg(init=UInt(width=log2Up(weight_size))
+    val output_counter = Reg(init=UInt(width=log2Up(output_width))
 
     for(k <- 0 until kernels){
         val dotprod = Module(new DotProduct(input_size, input_width)).io
@@ -30,7 +30,7 @@ class FullyConnected(kernels: Int, weights: Array[Array[Int]], input_size: Int, 
         }
         dotprod.vec_2 := w_slice
 
-        when(output_counter === UInt(0)){
+        when(weight_counter === UInt(0)){
             acc(UInt(k)) := dotprod.data_out
         } .otherwise {
             acc(output_counter + UInt(k)) := acc(output_counter + UInt(k)) + dotprod.data_out
@@ -39,11 +39,11 @@ class FullyConnected(kernels: Int, weights: Array[Array[Int]], input_size: Int, 
         output_counter := output_counter + UInt(kernels)
         when(output_counter === UInt(output_size) - UInt(kernels)) {
             output_counter := UInt(0)
-
-            weight_counter := weight_counter + UInt(input_size)
             when(weight_counter === UInt(weight_size) - UInt(input_size)) {
                 weight_counter := UInt(0)
                 io.output_data.valid := Bool(true)
+            } .otherwise {
+                weight_counter := weight_counter + UInt(input_size)
             }
         }
 
