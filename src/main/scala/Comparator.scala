@@ -5,8 +5,8 @@ import Chisel._
 class Comparator(dataWidth: Int) extends RosettaAccelerator {
   val numMemPorts = 0
   val io = new RosettaAcceleratorIF(numMemPorts) {
-    val in0 = UInt(INPUT, dataWidth)
-    val in1 = UInt(INPUT, dataWidth)
+    val in0 = SInt(INPUT, dataWidth)
+    val in1 = SInt(INPUT, dataWidth)
     val output = UInt(OUTPUT, 1)
   }
 
