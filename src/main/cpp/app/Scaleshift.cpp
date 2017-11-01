@@ -1,8 +1,10 @@
 #include <iostream>
+#include <time.h>
 using namespace std;
 
 int main() 
 {
+	clock_t tStart = clock();
     int input[43] = {-12, 90, 182, 20, 20, 42, 2, 52, 14, -34, -38, 14, -56, -82, 18, -4, -58, 
     			16, -34, -22, -42, 14, -34, -30, -16, -40, -90, 2, -58, -14, -42, 16, -12, 
     			26, -18, -36, -24, 16, -12, 6, 18, -34, -32};
@@ -30,7 +32,7 @@ int main()
     	out[i]= input[i]*A[i] + B[i];
     	cout << out[i] << '\n';
     };
-
+    cout << "Time taken: " << (double)(clock() - tStart);
     return 0;
 }
 

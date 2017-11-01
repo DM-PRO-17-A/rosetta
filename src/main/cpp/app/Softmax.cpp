@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cmath>
 #include <iomanip>
+#include <time.h>
 using namespace std;
 
 
@@ -8,6 +9,7 @@ using namespace std;
 
 
 int main() {
+	clock_t tStart = clock();
 	int inn[43] = {-2.23437 ,9.39079, 18.646, 3.48209, 3.1971, 5.25959, -0.298361,
 					4.70921, 2.2568, -2.89335, -3.12642, 1.68339, -7.17993, -9.49075, 
 					1.36411, -0.790497, -6.00298, 1.28758, -3.10086, -2.04844, -3.92784,
@@ -33,6 +35,6 @@ int main() {
    		cout << " -------- " << out[i]  << '\n';
    		
     };
-	
+	cout << "Time taken: " << (double)(clock() - tStart);
     return 0;
 }
