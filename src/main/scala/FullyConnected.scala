@@ -5,6 +5,7 @@ import Chisel._
 // These param names are really bad
 class FullyConnected(kernels: Int, weights: Array[Array[Int]], input_size: Int, weight_size: Int, output_size: Int, input_width: Int) extends RosettaAccelerator {
     val output_width = math.ceil(math.log(input_size * 2 ^ input_width * weight_size) / math.log(2)).toInt + 1
+    //val output_width = 21
     val numMemPorts = 0
     val io = new RosettaAcceleratorIF(numMemPorts){
         val input_data = Vec.fill(input_size){UInt(INPUT, input_width)}
@@ -17,8 +18,8 @@ class FullyConnected(kernels: Int, weights: Array[Array[Int]], input_size: Int, 
 
     val acc = Vec.fill(output_size){Reg(init=SInt(0,width=output_width))}
 
-    val weight_counter = Reg(init=UInt(width=log2Up(weight_size))
-    val output_counter = Reg(init=UInt(width=log2Up(output_width))
+    val weight_counter = Reg(init=UInt(width=log2Up(weight_size)))
+    val kernel_counter = Reg(init=UInt(width=output_width))
 
     for(k <- 0 until kernels){
         val dotprod = Module(new DotProduct(input_size, input_width)).io
@@ -26,27 +27,35 @@ class FullyConnected(kernels: Int, weights: Array[Array[Int]], input_size: Int, 
 
         val w_slice = Vec.fill(input_size){UInt(width=1)}
         for(i <- 0 until input_size) {
-            w_slice(i) := w(k)(weight_counter+UInt(i))
+            w_slice(i) := w(kernel_counter + UInt(k))(weight_counter+UInt(i))
         }
+        printf("weights: %b\n", w_slice(0))
         dotprod.vec_2 := w_slice
 
+        // If through all weights, reset accumulators
         when(weight_counter === UInt(0)){
-            acc(UInt(k)) := dotprod.data_out
+            acc(kernel_counter + UInt(k)) := dotprod.data_out
         } .otherwise {
-            acc(output_counter + UInt(k)) := acc(output_counter + UInt(k)) + dotprod.data_out
+            acc(kernel_counter + UInt(k)) := acc(kernel_counter + UInt(k)) + dotprod.data_out
         }
+    }
 
-        output_counter := output_counter + UInt(kernels)
-        when(output_counter === UInt(output_size) - UInt(kernels)) {
-            output_counter := UInt(0)
-            when(weight_counter === UInt(weight_size) - UInt(input_size)) {
-                weight_counter := UInt(0)
-                io.output_data.valid := Bool(true)
-            } .otherwise {
-                weight_counter := weight_counter + UInt(input_size)
-            }
+    // If done with all kernels for current input
+    when(kernel_counter === UInt(output_size - kernels)) {
+        kernel_counter := UInt(0)
+
+        // Update weight counter
+        when(weight_counter === UInt(weight_size - input_size)) {
+            // If we are done
+            weight_counter := UInt(0)
+            io.output_data.valid := Bool(true)
+        } .otherwise {
+            // Increment weight counter by input_size
+            weight_counter := weight_counter + UInt(input_size)
         }
-
+    } .otherwise {
+        // Increment kernel_counter by kernels
+        kernel_counter := kernel_counter + UInt(kernels)
     }
 
     for(i <- 0 until output_size) {
@@ -55,27 +64,19 @@ class FullyConnected(kernels: Int, weights: Array[Array[Int]], input_size: Int, 
 }
 
 class FullyConnectedTests(c: FullyConnected) extends Tester(c) {
-    val test_array = Array[BigInt](20, 10, 2, 45)
-    val test_array_2 = Array[BigInt](1,2,3,4)
-    val step_size = 2
+    val test_data = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/test_data/fc1input60.txt")).getLines.toArray
+    val img = test_data(0).split(" ").map(s => BigInt(s.toInt))
 
-    // This test is really ugly
-    poke(c.io.input_data, test_array)
-    peek(c.acc)
-    step(1)
-//    poke(c.io.input_data, Array[BigInt](2, 45))
-//    peek(c.acc)
-//    step(1)
-    peek(c.io.output_data)
-    expect(c.io.output_data.bits(0), -33)
-    expect(c.io.output_data.bits(1), 77)
-    expect(c.io.output_data.bits(2), -77)
-    poke(c.io.input_data, test_array_2)
-    step(2)
-    peek(c.acc)
-    peek(c.io.output_data)
-    expect(c.io.output_data.bits(0), -2)
-    expect(c.io.output_data.bits(1), 10)
-    expect(c.io.output_data.bits(2), -10)
+    val lines = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/test_data/fc1.txt")).getLines.toArray
+    val weights = lines(0).split(" ").map(s => s.toInt * 2 -1)
+    val weights_1 = lines(1).split(" ").map(s => s.toInt * 2 -1)
 
+    for(i <- 0 until 10){
+        println(img(i), weights(i))
+        poke(c.io.input_data, Array(img(i)))
+        step(1)
+        expect(c.io.output_data.bits(0), (img.slice(0, i+1) zip weights.slice(0, i+1)).map{case (i1: BigInt, i2: Int) => i1*i2}.reduceLeft(_ + _))
+        expect(c.io.output_data.bits(1), (img.slice(0, i+1) zip weights_1.slice(0, i+1)).map{case (i1: BigInt, i2: Int) => i1*i2}.reduceLeft(_ + _))
+    }
+    peek(c.io.output_data)
 }

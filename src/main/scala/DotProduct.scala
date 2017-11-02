@@ -8,7 +8,7 @@ class DotProduct(input_size: Int, input_width: Int) extends RosettaAccelerator {
     }
 
     def expandInt(a: UInt): SInt = {
-        SInt(2, width=3), *a.zext-UInt(1)
+        SInt(2, width=3) * a.zext - UInt(1)
     }
 
     val output_width = math.ceil(math.log(input_size * math.pow(2, input_width)) / math.log(2)).toInt + 1
