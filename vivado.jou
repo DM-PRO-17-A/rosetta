@@ -1,0 +1,12 @@
+#-----------------------------------------------------------
+# Vivado v2016.4 (64-bit)
+# SW Build 1756540 on Mon Jan 23 19:11:19 MST 2017
+# IP Build 1755317 on Mon Jan 23 20:30:07 MST 2017
+# Start of session at: Sun Oct 29 13:45:09 2017
+# Process ID: 17488
+# Current directory: /home/edvard/Skole/DMP/rosettauto
+# Command line: vivado -mode batch -source /home/edvard/Skole/DMP/rosettauto/src/main/script/host/make-vivado-project.tcl -tclargs /home/edvard/Skole/DMP/rosettauto /home/edvard/Skole/DMP/rosettauto/build/hw/verilog/PYNQWrapper.v bitfile_synth /home/edvard/Skole/DMP/rosettauto/build/bitfile_synth 150.0
+# Log file: /home/edvard/Skole/DMP/rosettauto/vivado.log
+# Journal file: /home/edvard/Skole/DMP/rosettauto/vivado.jou
+#-----------------------------------------------------------
+source /home/edvard/Skole/DMP/rosettauto/src/main/script/host/make-vivado-project.tcl

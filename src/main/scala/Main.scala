@@ -17,8 +17,11 @@ object ChiselMain {
     //chiselMainTest(args, () => Module(new Max(4, 1))){c => new MaxTests(c)}
     //chiselMainTest(args, () => Module(new Sum(9,8))){c => new SumTests(c)}
     //chiselMainTest(args, () => Module(new Mux2())){c => new Mux2Tests(c)}
+    //chiselMainTest(args, () => Module(new Scale(4, 8))){c => new ScaleTests(c)}
+    //chiselMainTest(args, () => Module(new Shift(4, 8))){c => new ShiftTests(c)}
+    //chiselMainTest(args, () => Module(new ScaleShift(4, 8))){c => new ScaleShiftTests(c)}
     //chiselMainTest(args, () => Module(new Comparator(8))){c => new ComparatorTest(c)}
-    chiselMainTest(args, () => Module(new DotProduct(5, 8))){c => new DotProductTests(c)}
+    //chiselMainTest(args, () => Module(new DotProduct(5, 8))){c => new DotProductTests(c)}
     //chiselMainTest(args, () => Module(new ROM())){c => new ROMTests(c)}
   }
 }
