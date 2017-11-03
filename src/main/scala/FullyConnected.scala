@@ -3,80 +3,97 @@ package rosetta
 import Chisel._
 
 // These param names are really bad
-class FullyConnected(kernels: Int, weights: Array[Array[Int]], input_size: Int, weight_size: Int, output_size: Int, input_width: Int) extends RosettaAccelerator {
-    val output_width = math.ceil(math.log(input_size * 2 ^ input_width * weight_size) / math.log(2)).toInt + 1
-    //val output_width = 21
-    val numMemPorts = 0
-    val io = new RosettaAcceleratorIF(numMemPorts){
-        val input_data = Vec.fill(input_size){UInt(INPUT, input_width)}
+class FullyConnected(kernels_path: String, kernels_per_it: Int, input_per_it: Int, input_width: Int) extends RosettaAccelerator {
+    // Map the kernels / weights to UInt
+    val kernels = Vec(
+      scala.io.Source.fromInputStream(this.getClass.getResourceAsStream(kernels_path)).getLines.toArray.slice(0, 1)
+        .map(kernel => Vec(
+          kernel.split(" ").map(i => UInt(i.toInt, width=1)).toArray
+        )
+      )
+    )
 
-        val output_data = Decoupled(Vec.fill(output_size){SInt(OUTPUT, output_width)})
+    // Output width is the amount of weights in each kernels times the maximum value of each input
+    val output_width = math.ceil(math.log(kernels(0).length * math.pow(2, input_width)) / math.log(2)).toInt + 1
+
+    val numMemPorts = 0
+    val io = new RosettaAcceleratorIF(numMemPorts) {
+        val input_data = Vec.fill(input_per_it){UInt(INPUT, input_width)}
+
+        val output_data = Decoupled(Vec.fill(kernels.length){SInt(OUTPUT, output_width)})
     }
     io.output_data.valid := Bool(false)
 
-    val w = Vec(weights.map(s => Vec(s.map(t => UInt(t, 1)))))
 
-    val acc = Vec.fill(output_size){Reg(init=SInt(0,width=output_width))}
+    // Set up a bunch of accumulators, one for each kernel
+    val acc = Vec.fill(kernels.length){Reg(init=SInt(0, width=output_width))}
 
-    val weight_counter = Reg(init=UInt(width=log2Up(weight_size)))
-    val kernel_counter = Reg(init=UInt(width=output_width))
+    // Hard to name these variables, as we may be doing several weights at a time or
+    // several kernels at a time but ¯\_(:D)_/¯
+    val current_weight = Reg(init=UInt(width=log2Up(kernels(0).length)))
+    val current_kernel = Reg(init=UInt(width=log2Up(kernels.length)))
 
-    for(k <- 0 until kernels){
-        val dotprod = Module(new DotProduct(input_size, input_width)).io
-        dotprod.vec_1 := io.input_data
+    // Set up how many dotproducts to do at once
+    for (k <- 0 until kernels_per_it) {
+        val dot_prod = Module(new DotProduct(input_per_it, input_width)).io
 
-        val w_slice = Vec.fill(input_size){UInt(width=1)}
-        for(i <- 0 until input_size) {
-            w_slice(i) := w(kernel_counter + UInt(k))(weight_counter+UInt(i))
+        // All dot products takes in the same input
+        dot_prod.vec_1 := io.input_data
+
+        // Hook up the correct weights for each iteration.
+        // Need to check if this is efficient in Vivado.
+        val w_slice = Vec.fill(input_per_it){UInt(width=1)}
+        for (i <- 0 until input_per_it) {
+            w_slice(i) := kernels(current_kernel + UInt(k))(current_weight + UInt(i))
         }
-        printf("weights: %b\n", w_slice(0))
-        dotprod.vec_2 := w_slice
+        dot_prod.vec_2 := w_slice
 
-        // If through all weights, reset accumulators
-        when(weight_counter === UInt(0)){
-            acc(kernel_counter + UInt(k)) := dotprod.data_out
+        // If we're done with all weights in each kernel, reset accumulators
+        // Ie. we're done with the current picture
+        when (current_kernel === UInt(0)) {
+            acc(current_kernel + UInt(k)) := dot_prod.data_out
         } .otherwise {
-            acc(kernel_counter + UInt(k)) := acc(kernel_counter + UInt(k)) + dotprod.data_out
+            acc(current_kernel + UInt(k)) := acc(current_kernel + UInt(k)) + dot_prod.data_out
         }
     }
 
     // If done with all kernels for current input
-    when(kernel_counter === UInt(output_size - kernels)) {
-        kernel_counter := UInt(0)
+    when (current_kernel === UInt(kernels.length - kernels_per_it)) {
+        current_kernel := UInt(0)
 
         // Update weight counter
-        when(weight_counter === UInt(weight_size - input_size)) {
+        when (current_weight === UInt(kernels(0).length - input_per_it)) {
             // If we are done
-            weight_counter := UInt(0)
+            current_weight := UInt(0)
             io.output_data.valid := Bool(true)
         } .otherwise {
-            // Increment weight counter by input_size
-            weight_counter := weight_counter + UInt(input_size)
+            // Increment weight counter by input_per_it
+            current_weight := current_weight + UInt(input_per_it)
         }
     } .otherwise {
         // Increment kernel_counter by kernels
-        kernel_counter := kernel_counter + UInt(kernels)
+        current_kernel := current_kernel + UInt(kernels_per_it)
     }
 
-    for(i <- 0 until output_size) {
+    for (i <- 0 until kernels.length) {
         io.output_data.bits(i) := acc(i)
     }
 }
 
 class FullyConnectedTests(c: FullyConnected) extends Tester(c) {
-    val test_data = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/test_data/fc1input60.txt")).getLines.toArray
-    val img = test_data(0).split(" ").map(s => BigInt(s.toInt))
+    val input_data = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/test_data/fc1input60.txt")).getLines.toArray.head.split(" ").map(s => BigInt(s.toInt))
+    val kernels = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/test_data/fc1.txt")).getLines.toArray.map(kernel => kernel.split(" ").map(s => s.toInt * 2 -1))
 
-    val lines = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/test_data/fc1.txt")).getLines.toArray
-    val weights = lines(0).split(" ").map(s => s.toInt * 2 -1)
-    val weights_1 = lines(1).split(" ").map(s => s.toInt * 2 -1)
+    val input_size = 1
+    val kernels_per_iteration = 1
 
-    for(i <- 0 until 10){
-        println(img(i), weights(i))
-        poke(c.io.input_data, Array(img(i)))
+    for (i <- 0 until 10) {
+        poke(c.io.input_data, input_data.slice(i, i + input_size))
         step(1)
-        expect(c.io.output_data.bits(0), (img.slice(0, i+1) zip weights.slice(0, i+1)).map{case (i1: BigInt, i2: Int) => i1*i2}.reduceLeft(_ + _))
-        expect(c.io.output_data.bits(1), (img.slice(0, i+1) zip weights_1.slice(0, i+1)).map{case (i1: BigInt, i2: Int) => i1*i2}.reduceLeft(_ + _))
+        for (k <- 0 until kernels_per_iteration) {
+          println(input_data.slice(i, i + input_size).mkString(" "), kernels(k).slice(0, i+1).mkString(" "))
+          expect(c.io.output_data.bits(k), (input_data.slice(0, i+1) zip kernels(k).slice(0, i+1)).map{case (i1: BigInt, i2: Int) => i1*i2}.reduceLeft(_ + _))
+        }
     }
     peek(c.io.output_data)
 }
