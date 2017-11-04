@@ -47,7 +47,9 @@ class ImageQueue(queueDepth: Int, dataWidth: Int) extends RosettaAccelerator {
 
     }
 
-    val testQueue = Module(new Queue(Vec.fill(vec_fill_size){UInt(width = dataWidth)}, entries = queueDepth))
+    //class FPGAQueue[T <: Data](gen: T, val entries: Int)
+    //Connect correct data to FPGAQueue
+    val testQueue = Module(new FPGAQueue(Vec.fill(vec_fill_size){UInt(width = dataWidth)}, entries = queueDepth))
     //Queues the bits from queue_input
     testQueue.io.enq <> io.queue_input
     //Connects output to the dequed information from testQueue.
@@ -55,26 +57,7 @@ class ImageQueue(queueDepth: Int, dataWidth: Int) extends RosettaAccelerator {
     //Counts the number of elements in the queue
     testQueue.io.count <> io.queue_count
 
-    /*
-    testList = Array[BigInt][0, 0, 0, 255, 0, 0, 0, 255, 0, 0, 0, 255,]
 
-    def writeImage(image: List[Int]) Unit = {
-        for ( i <- test ) {
-            poke(c.io.queue_input.bits, (UInt)i)
-            poke(c.io.queue_input.valid, 1)
-            step(1)
-        }
-    }
-    */
-    //testQueue.io.enq.valid <> io.valid_input
-    //testQueue.io.deq.ready <> io.read_data
-    /*
-    for ( i <- test ) {
-        poke(c.io.queue_input.bits, (UInt)i)
-        poke(c.io.queue_input.valid, 1)
-        step(1)
-    }
-    */
 
 
 
