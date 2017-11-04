@@ -43,7 +43,6 @@ class ImageQueue(queueDepth: Int, dataWidth: Int) extends RosettaAccelerator {
         val queue_input = Flipped(Decoupled(Vec.fill(vec_fill_size){UInt(INPUT, width = dataWidth)}))  //Valid and bits are inputs
         val queue_output = (Decoupled(Vec.fill(vec_fill_size){UInt(OUTPUT, width = dataWidth)}))       //Valid and bits are outputs.count
         val queue_count = UInt(OUTPUT)
-        val queue_write_enable = Bool(INPUT)
 
     }
 
