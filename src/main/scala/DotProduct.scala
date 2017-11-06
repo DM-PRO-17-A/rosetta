@@ -30,7 +30,8 @@ class DotProduct(input_size: Int, input_width: Int) extends RosettaAccelerator {
 }
 
 class DotProductTests(c: DotProduct) extends Tester(c) {
-    val lines = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/test_data/dot_product.txt")).getLines.toArray
+    val lines = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/test_data/dot_product_small.txt")).getLines.toArray
+    val i_1 = Array(111-1-1-11-1-1-1-1-1-1-111-11-111-1-1-1-1-1-1111)
 
     0 until lines.length / 3 foreach {
         it => {
