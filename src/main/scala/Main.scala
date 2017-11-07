@@ -15,7 +15,7 @@ object Settings {
 object ChiselMain {
   def main(args: Array[String]): Unit = {
     //chiselMain(args, () => Module(new RosettaWrapper(Settings.myInstFxn)))
-    //chiselMainTest(args, () => Module(new Max(4, 8))){c => new MaxTests(c)}
+    //chiselMainTest(args, () => Module(new Max(4, 1))){c => new MaxTests(c)}
     //chiselMainTest(args, () => Module(new Sum(9,8))){c => new SumTests(c)}
     //chiselMainTest(args, () => Module(new Mux2())){c => new Mux2Tests(c)}
     //chiselMainTest(args, () => Module(new ImageLoader(10, 256))){c => new ImageLoaderTests(c)}
