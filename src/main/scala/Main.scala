@@ -22,7 +22,7 @@ object ChiselMain {
     //chiselMainTest(args, () => Module(new DotProduct(5, 8))){c => new DotProductTests(c)}
     //chiselMainTest(args, () => Module(new ROM())){c => new ROMTests(c)}
     //chiselMainTest(args, () => Module(new FullyConnected(3, Array(Array(1,0,1,0),Array(1,1,1,1),Array(0,0,0,0)), 4, 4, 3, 8))){c => new FullyConnectedTests(c)}
-    chiselMainTest(args, () => Module(new ComparatorWrapper(12, 12))){c => new ComparatorWrapperTest(c)}
+    chiselMainTest(args, () => Module(new ComparatorWrapper(12, 1))){c => new ComparatorWrapperTest(c)}
     //chiselMainTest(args, () => Module(new DotProduct(4,2))){c => new DotProductTests(c)}
     //chiselMainTest(args, () => Module(new DotProduct(5, 8))){c => new DotProductTests(c)}
     //chiselMainTest(args, () => Module(new ROM())){c => new ROMTests(c)}

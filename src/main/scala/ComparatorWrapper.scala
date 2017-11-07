@@ -6,10 +6,13 @@ class ComparatorWrapper(dataWidth: Int, valuesPerIteration: Int) extends Rosetta
   val numMemPorts = 0
   val io = new RosettaAcceleratorIF(numMemPorts) {
     // values to be compared
-    val input = Vec.fill(valuesPerIteration){SInt(INPUT, 21)}
+    val input = Flipped(Decoupled(Vec.fill(valuesPerIteration){SInt(INPUT, 21)}))
     // values to be output
     val output = Decoupled(Vec.fill(valuesPerIteration){UInt(OUTPUT, 1)})
   }
+
+  io.output.valid := io.input.valid
+  io.input.ready := io.output.ready
 
   val thresholds = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/test_data/thresholds.txt")).getLines.toArray
   val t = Vec(thresholds(0).split(", ").map(f => SInt(f.toInt, width = 12)))
@@ -24,9 +27,9 @@ class ComparatorWrapper(dataWidth: Int, valuesPerIteration: Int) extends Rosetta
   // creates a new comparator for each element in array 
   for(j <- 0 until valuesPerIteration){
       val in = Module(new Comparator(21)).io
-      in.in0 := io.input(UInt(j))
+      in.in0 := io.input.bits(UInt(j))
       printf("value being compared: ")
-      printf("%d\n", io.input(UInt(j)))
+      printf("%d\n", io.input.bits(UInt(j)))
       printf("threshold being compared against: ")
       printf("%d\n", t(counter + UInt(j)))
       in.in1 := t(counter + UInt(j))
@@ -44,13 +47,15 @@ class ComparatorWrapper(dataWidth: Int, valuesPerIteration: Int) extends Rosetta
 
 
 class ComparatorWrapperTest(c: ComparatorWrapper) extends Tester(c) {
-  val test = Array[BigInt](67, 252, 27, 121, 184, 30, 35, 60, 137, 127, 42, 251)
-  poke(c.io.input, test)
+  val test = Array[BigInt](126)
+  poke(c.io.input.valid, 1)
+  poke(c.io.input.bits(0), test(0))
+  peek(c.io.input)
   peek(c.io.output)
-  step(1)
-  val test2 = Array[BigInt](155, 41, 200, 133, 213, 35, 176, 191, 24, 206, 60, 210)
-  poke(c.io.input, test2)
-  peek(c.io.output)
+  // step(1)
+  // val test2 = Array[BigInt](155, 41, 200, 133, 213, 35, 176, 191, 24, 206, 60, 210)
+  // poke(c.io.input, test2)
+  // peek(c.io.output)
   // val test = Array[BigInt](1)
   // val test2 = Array[BigInt](2)
   // val test3 = Array[BigInt](3)
