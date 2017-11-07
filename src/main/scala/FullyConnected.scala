@@ -4,11 +4,11 @@ import Chisel._
 
 // These param names are really bad
 class FullyConnected(kernels_path: String, kernels_per_it: Int, input_per_it: Int, input_width: Int) extends RosettaAccelerator {
-    val kernels_length = 8
+    val kernels_length = 256
     val weights_length = 3072
     // Map the kernels / weights to UInt
     val kernels = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream(kernels_path)).getLines.toArray.slice(0, kernels_length)
-        .map(kernel => 
+        .map(kernel =>
           kernel.split(" ").map(i => UInt(i.toInt, width=1)).toArray.slice(0, weights_length)
         )
 
@@ -43,12 +43,12 @@ class FullyConnected(kernels_path: String, kernels_per_it: Int, input_per_it: In
         dot_prods(k).vec_2 := io.input_data
     }
 
-    val weight_step = current_weight * UInt(input_per_it) + current_kernel
+    val weight_step = current_weight / UInt(input_per_it) * UInt(kernels_length) + current_kernel
 
     switch (weight_step) {
       for (w <- 0 until weights_length by input_per_it) {
         for (k <- 0 until kernels_length by kernels_per_it) {
-          is (UInt(w * input_per_it + k)) {
+          is (UInt(w / input_per_it * kernels_length + k, width=log2Up(weights_length / input_per_it * kernels_length + kernels_length))) {
             for (k_i <- 0 until kernels_per_it) {
               for (i <- 0 until input_per_it) {
                 dot_prods(k_i).vec_2(i) := kernels(k + k_i)(w + i)
@@ -61,7 +61,7 @@ class FullyConnected(kernels_path: String, kernels_per_it: Int, input_per_it: In
 
     switch (weight_step % UInt(kernels_length)) {
       for (k <- 0 until kernels_length by kernels_per_it) {
-        is (UInt(k)) {
+        is (UInt(k, width=log2Up(kernels_length))) {
           for (k_i <- 0 until kernels_per_it) {
             acc(k + k_i) := acc(k + k_i) + dot_prods(k_i).data_out
           }
@@ -99,7 +99,7 @@ class FullyConnectedTests(c: FullyConnected) extends Tester(c) {
             //println(i, i + input_size)
 
             //println(input_data.slice(i, i+input_size).mkString(", "))
-            for (k <- 0 until 8 by kernels_per_iteration) {
+            for (k <- 0 until 256 by kernels_per_iteration) {
                 step(1)
                 //println(kernels(k).slice(i, i+input_size).mkString(", "))
                 //println((input_data.slice(i, i+input_size) zip kernels(k).slice(i, i+input_size)).map{case (i1: BigInt, i2: Int) => i1*i2}.reduceLeft(_+_))
