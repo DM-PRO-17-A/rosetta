@@ -7,6 +7,7 @@ CC = g++
 # scp/rsync target to copy files to board
 BOARD_URI := xilinx@192.168.1.16:~/rosetta
 
+
 # other project settings
 SBT ?= sbt
 SBT_FLAGS ?= -Dsbt.log.noformat=true
