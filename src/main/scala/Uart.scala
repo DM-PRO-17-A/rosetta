@@ -1,5 +1,4 @@
 package rosetta
-
 import Chisel._
 
 class UartTx(val wtime: Int) extends Module {

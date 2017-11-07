@@ -55,7 +55,7 @@ class ImageQueue(queueDepth: Int, dataWidth: Int) extends RosettaAccelerator {
     io.queue_output <> testQueue.io.deq
     //Counts the number of elements in the queue
     testQueue.io.count <> io.queue_count
-
+    
 
 
 
