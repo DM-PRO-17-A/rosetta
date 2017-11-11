@@ -4,8 +4,8 @@ import Chisel._
 
 // These param names are really bad
 class FullyConnected(kernels_path: String, kernels_per_it: Int, input_per_it: Int, input_width: Int) extends RosettaAccelerator {
-    val kernels_length = 2
-    val weights_length = 16
+    val kernels_length = 12
+    val weights_length = 256
     // Map the kernels / weights to UInt
     val kernels = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream(kernels_path)).getLines.toArray.slice(0, kernels_length)
         .map(kernel =>
@@ -38,27 +38,37 @@ class FullyConnected(kernels_path: String, kernels_per_it: Int, input_per_it: In
     val current_weight = Reg(init=UInt(0, width=log2Up(weights_length)))
     val current_kernel = Reg(init=UInt(0, width=log2Up(kernels_length)))
 
-    val im_wait :: frame_wait :: calc :: Nil = Enum(UInt(), 3)
-    val state = Reg(init = im_wait)
+    val im_wait :: frame_wait :: calc :: Nil = Enum(UInt(), 3) // Sexy
+    val state = Reg(init = frame_wait)
 
     switch(state) {
         is(im_wait) {
-            io.input_data.ready := Bool(true)
-            when(io.input_data.valid) {
-                // Received first input
+            when(io.input_data.valid && io.output_data.ready) {
+                // Received first input and the next element in the pipeline is ready
+                for (k <- 0 until kernels_length) {
+                  // Reset accumulators before begining to process next image
+                  acc(k) := UInt(0)
+                }
+                io.input_data.ready := Bool(false) // Ie. we're not ready for next input!
                 state := calc
+            } .otherwise {
+                io.output_data.valid := Bool(true)
+                io.input_data.ready := Bool(true) // We are waiting for the next image and havent received anything yet
             }
-        } 
+        }
         is(frame_wait) {
-            io.input_data.ready := Bool(true)
             when(io.input_data.valid) {
                 // Received next input
+                io.input_data.ready := Bool(false)
                 state := calc
+            } .otherwise {
+                io.input_data.ready := Bool(true)
             }
         }
         is(calc) {
-            when(current_weight === UInt(weights_length - input_per_it)){
-                when(current_kernel === UInt(kernels_length - kernels_per_it)){
+            when(current_kernel === UInt(kernels_length - kernels_per_it)){
+                io.input_data.ready := Bool(true) // At this step we are ready for next input
+                when(current_weight === UInt(weights_length - input_per_it)){
                     // Done with image
                     state := im_wait
                 } .otherwise {
@@ -93,29 +103,34 @@ class FullyConnected(kernels_path: String, kernels_per_it: Int, input_per_it: In
     }
 
     when(state === calc) {
-    switch (weight_step % UInt(kernels_length)) {
-          for (k <- 0 until kernels_length by kernels_per_it) {
-            is (UInt(k, width=log2Up(kernels_length))) {
-              for (k_i <- 0 until kernels_per_it) {
-                acc(k + k_i) := acc(k + k_i) + dot_prods(k_i).data_out
-              }
+      switch (weight_step % UInt(kernels_length)) {
+        for (k <- 0 until kernels_length by kernels_per_it) {
+          is (UInt(k, width=log2Up(kernels_length))) {
+            for (k_i <- 0 until kernels_per_it) {
+              acc(k + k_i) := acc(k + k_i) + dot_prods(k_i).data_out
             }
           }
         }
+      }
+
+      when (current_kernel === UInt(kernels_length - kernels_per_it)) {
+          current_kernel := UInt(0)
+
+          when (current_weight === UInt(weights_length - input_per_it)) {
+              // We are done
+              io.output_data.valid := Bool(true)
+              current_weight := UInt(0)
+
+          } .otherwise {
+              current_weight := current_weight + UInt(input_per_it)
+          }
+
+      } .otherwise {
+          current_kernel := current_kernel + UInt(kernels_per_it)
+          io.output_data.valid := Bool(false)
+      }
     }
 
-    when (current_kernel === UInt(kernels_length - kernels_per_it)) {
-        when (current_weight === UInt(weights_length - input_per_it)) {
-            // We are done
-            io.output_data.valid := Bool(true)
-        } .otherwise {
-            current_kernel := UInt(0)
-            current_weight := current_weight + UInt(input_per_it)
-        }
-    } .otherwise {
-        current_kernel := current_kernel + UInt(kernels_per_it)
-        io.output_data.valid := Bool(false)
-    }
 
 }
 
@@ -124,26 +139,48 @@ class FullyConnectedTests(c: FullyConnected) extends Tester(c) {
     val kernels = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/test_data/fc1.txt")).getLines.toArray.map(kernel => kernel.split(" ").map(s => s.toInt * 2 -1))
 
     val input_size = 16
-    val kernels_per_iteration = 1
+    val kernels_per_iteration = 2
+    val kernels_length = 12
+    val weights_length = 256
 
-    for (image <- 0 until 1) {
-        val acc = Array.fill(kernels_per_iteration){0}
-        for (i <- 0 until 16 by input_size) {
-            println(i)
-            poke(c.io.input_data.valid, 1)
+    for (image <- 0 until 2) {
+        poke(c.io.output_data.ready, 1) // The next component is ready
+        for (i <- 0 until weights_length by input_size) {
+            expect(c.io.output_data.valid, 0)
+            expect(c.io.input_data.ready, 1)
+            step(5) // Some delay while changing input
+
+            // Poke input and set valid to 1!
             poke(c.io.input_data.bits, input_data.slice(i, i + input_size))
-            //println(i, i + input_size)
+            poke(c.io.input_data.valid, 1)
+            step(1) // First step, move from waiting state to calc state
 
-            //println(input_data.slice(i, i+input_size).mkString(", "))
-            for (k <- 0 until 2 by kernels_per_iteration) {
-                step(1)
-                //println(kernels(k).slice(i, i+input_size).mkString(", "))
-                //println((input_data.slice(i, i+input_size) zip kernels(k).slice(i, i+input_size)).map{case (i1: BigInt, i2: Int) => i1*i2}.reduceLeft(_+_))
+            while (expect(c.io.input_data.ready, 0)) {
+              step(1) // In calc state, ready == 0 until we're done with current input
+              // Keep in mind that the last iteration of this while loop will result in a test "failing". It is expected though it fucks up the "SUCCESS" metric
+            }
+
+            poke(c.io.input_data.valid, 0) // As soon as ready == 1, the previous component has to set valid to 0 or provide the next input immediately
+
+            // Nothing happens even after 10 steps, we're in the frame_wait state, and we can verify that!
+            step(10)
+            for (k <- 0 until kernels_length by kernels_per_iteration) {
                 for (k_i <- 0 until kernels_per_iteration) {
                     expect(c.io.output_data.bits(k + k_i), (input_data.slice(0, i+input_size) zip kernels(k + k_i).slice(0, i+input_size)).map{case (i1: BigInt, i2: Int) => i1*i2}.reduceLeft(_ + _))
                 }
             }
         }
+        // Output data should now be valid!
+        expect(c.io.output_data.valid, 1)
+
+        // Step once so the next component can react on the fact that output_data.valid == 1
+        step(1)
+        poke(c.io.output_data.ready, 0) // Indicating that the next component is not ready.
+
+        // Do some random steps to check that the output doesnt get changed before output_data.ready is 1 again
+        step(10)
+        for (k <- 0 until kernels_length) {
+            expect(c.io.output_data.bits(k), (input_data.slice(0, weights_length) zip kernels(k).slice(0, weights_length)).map{case (i1: BigInt, i2: Int) => i1*i2}.reduceLeft(_ + _))
+        }
     }
-    peek(c.io.output_data)
 }
