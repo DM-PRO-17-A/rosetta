@@ -3,9 +3,8 @@ package rosetta
 import Chisel._
 
 // These param names are really bad
-class FullyConnected(kernels_path: String, kernels_per_it: Int, input_per_it: Int, input_width: Int) extends RosettaAccelerator {
-    val kernels_length = 12
-    val weights_length = 144
+class FullyConnected(kernels_path: String, kernels_length: Int, weights_length: Int, kernels_per_it: Int, input_per_it: Int, input_width: Int) extends RosettaAccelerator {
+
     // Map the kernels / weights to UInt
     val kernels = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream(kernels_path)).getLines.toArray.slice(0, kernels_length)
         .map(kernel =>

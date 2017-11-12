@@ -23,7 +23,7 @@ object ChiselMain {
     //chiselMainTest(args, () => Module(new DotProduct(4,2))){c => new DotProductTests(c)}
     //chiselMainTest(args, () => Module(new DotProduct(5, 8))){c => new DotProductTests(c)}
     //chiselMainTest(args, () => Module(new ROM())){c => new ROMTests(c)}
-    //chiselMainTest(args, () => Module(new AutoSimple("/test_data/fc1.txt", 2, 12, 8, 21, 12))){c => new AutoSimpleTest(c)}
+    //chiselMainTest(args, () => Module(new AutoSimple("/test_data/fc1.txt", "/test_data/fc2.txt"))){c => new AutoSimpleTest(c)}
     //chiselMainTest(args, () => Module(new DotProduct(5, 8))){c => new DotProductTests(c)}
     //chiselMainTest(args, () => Module(new ROM())){c => new ROMTests(c)}
     //chiselMainTest(args, () => Module(new FullyConnected("/test_data/fc1.txt", 2, 16, 8))){c => new FullyConnectedTests(c)}
