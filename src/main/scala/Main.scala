@@ -19,15 +19,14 @@ object ChiselMain {
     //chiselMainTest(args, () => Module(new Mux2())){c => new Mux2Tests(c)}
     //chiselMainTest(args, () => Module(new Comparator(8))){c => new ComparatorTest(c)}
     // chiselMainTest(args, () => Module(new ComparatorWrapper(12, 1))){c => new ComparatorWrapperTest(c)}
-    chiselMainTest(args, () => Module(new AutoTest(12, 4))){c => new AutoTestTest(c)}
+    // chiselMainTest(args, () => Module(new AutoTest(12, 4))){c => new AutoTestTest(c)}
     //chiselMainTest(args, () => Module(new DotProduct(4,2))){c => new DotProductTests(c)}
     //chiselMainTest(args, () => Module(new DotProduct(5, 8))){c => new DotProductTests(c)}
     //chiselMainTest(args, () => Module(new ROM())){c => new ROMTests(c)}
-    // chiselMainTest(args, () => Module(new AutoSimple(8, 4, Array(1, 1, 1, 1), 1, Array(Array(3, 5, 4, 1), Array(4, 4, 5, 1)), 4, 4, 8))){c => new AutoSimpleTest(c)}
+    chiselMainTest(args, () => Module(new AutoSimple("/test_data/fc1.txt", 2, 12, 8, 21, 12))){c => new AutoSimpleTest(c)}
     //chiselMainTest(args, () => Module(new DotProduct(5, 8))){c => new DotProductTests(c)}
     //chiselMainTest(args, () => Module(new ROM())){c => new ROMTests(c)}
     //chiselMainTest(args, () => Module(new FullyConnected("/test_data/fc1.txt", 2, 16, 8))){c => new FullyConnectedTests(c)}
-
   }
 }
 
