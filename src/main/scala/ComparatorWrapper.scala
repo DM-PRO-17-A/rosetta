@@ -28,10 +28,6 @@ class ComparatorWrapper(dataWidth: Int, valuesPerIteration: Int) extends Rosetta
   for(j <- 0 until valuesPerIteration){
       val in = Module(new Comparator(21)).io
       in.in0 := io.input.bits(UInt(j))
-      printf("value being compared: ")
-      printf("%d\n", io.input.bits(UInt(j)))
-      printf("threshold being compared against: ")
-      printf("%d\n", t(counter + UInt(j)))
       in.in1 := t(counter + UInt(j))
       io.output.bits(UInt(j)) := in.output
     }
@@ -52,33 +48,6 @@ class ComparatorWrapperTest(c: ComparatorWrapper) extends Tester(c) {
   poke(c.io.input.bits(0), test(0))
   peek(c.io.input)
   peek(c.io.output)
-  // step(1)
-  // val test2 = Array[BigInt](155, 41, 200, 133, 213, 35, 176, 191, 24, 206, 60, 210)
-  // poke(c.io.input, test2)
-  // peek(c.io.output)
-  // val test = Array[BigInt](1)
-  // val test2 = Array[BigInt](2)
-  // val test3 = Array[BigInt](3)
-  // val test4 = Array[BigInt](4)
-  // poke(c.io.input, test)
-  // peek(c.io.output)
-  // peek(c.counter)
-  // expect(c.io.output.bits(0), 0)
-  // step(1)
-  // poke(c.io.input, test2)
-  // peek(c.io.output)
-  // peek(c.counter)
-  // expect(c.io.output.bits(0), 1)
-  // step(1)
-  // poke(c.io.input, test3)
-  // peek(c.io.output)
-  // peek(c.counter)
-  // expect(c.io.output.bits(0), 0)
-  // step(1)
-  // poke(c.io.input, test4)
-  // peek(c.io.output)
-  // peek(c.counter)
-  // expect(c.io.output.bits(0), 0)
 }
 
 

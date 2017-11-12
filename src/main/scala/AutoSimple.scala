@@ -6,12 +6,10 @@
 //   val numMemPorts = 0
 //   val io = new RosettaAcceleratorIF(numMemPorts) {
 //     // values to be compared
-//     val input = Decoupled(Vec.fill(input_size){UInt(INPUT, dataWidth)})
+//     val input = Decoupled(Vec.fill(input_size){SInt(INPUT, dataWidth)})
 //     // values to be output
 //     val output = Decoupled(Vec.fill(input_size){UInt(OUTPUT, dataWidth)})
 //   }
-
-//   val t = Vec(thresholds.map(s => UInt(s, dataWidth)))
 
 //   // sets all values in output to be 0, NECESSARY to avoid error
 //   for(i <- 0 until input_size) {
