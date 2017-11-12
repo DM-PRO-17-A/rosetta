@@ -51,7 +51,7 @@ class FullyConnected(kernels_path: String, kernels_length: Int, weights_length: 
                 io.input_data.ready := Bool(false) // Ie. we're not ready for next input!
                 state := calc
             } .otherwise {
-                io.output_data.valid := Bool(true)
+                // io.output_data.valid := Bool(true)
                 io.input_data.ready := Bool(true) // We are waiting for the next image and havent received anything yet
             }
         }
