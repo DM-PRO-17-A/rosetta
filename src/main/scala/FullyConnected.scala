@@ -66,14 +66,14 @@ class FullyConnected(kernels_path: String, kernels_length: Int, weights_length: 
         }
         is(calc) {
             when(current_kernel === UInt(kernels_length - kernels_per_it)){
-                io.input_data.ready := Bool(true) // At this step we are ready for next input
-                when(current_weight === UInt(weights_length - input_per_it)){
-                    // Done with image
-                    state := im_wait
-                } .otherwise {
-                    // Done with weights for current kernels
-                    state := frame_wait
-                }
+                // // io.input_data.ready := Bool(true) // At this step we are ready for next input
+                // when(current_weight === UInt(weights_length - input_per_it)){
+                //     // Done with image
+                //     state := im_wait
+                // } .otherwise {
+                //     // Done with weights for current kernels
+                //     state := frame_wait
+                // }
             }
         }
     }
@@ -114,14 +114,17 @@ class FullyConnected(kernels_path: String, kernels_length: Int, weights_length: 
 
       when (current_kernel === UInt(kernels_length - kernels_per_it)) {
           current_kernel := UInt(0)
+          io.input_data.ready := Bool(true) // At this step we are ready for next input
 
           when (current_weight === UInt(weights_length - input_per_it)) {
               // We are done
               io.output_data.valid := Bool(true)
               current_weight := UInt(0)
+              state := im_wait
 
           } .otherwise {
               current_weight := current_weight + UInt(input_per_it)
+              state := frame_wait
           }
 
       } .otherwise {
