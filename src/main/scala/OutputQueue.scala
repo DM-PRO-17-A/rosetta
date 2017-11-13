@@ -17,7 +17,7 @@ class OutputQueue(dataWidth: Int, queueDepth: Int, vec_fill_size: Int) extends R
 
     }
 
-    val pulse_reg = Reg(next=io.output_pulse)
+    val pulse_reg = Reg(init=Bool(false), next=io.output_pulse)
     val queue = Module(new FPGAQueue(Vec.fill(vec_fill_size){UInt(width=dataWidth)}, queueDepth))
     val output_ready = (!io.output_pulse && pulse_reg)
     val output_reg = Reg(init=Vec.fill(vec_fill_size){UInt(width=dataWidth)})
@@ -27,6 +27,13 @@ class OutputQueue(dataWidth: Int, queueDepth: Int, vec_fill_size: Int) extends R
     io.count := queue.io.count
 
     queue.io.deq.ready := output_ready
+
+    /*
+    printf("OP: %b && PR: %b\n", io.output_pulse, pulse_reg)
+    when(output_ready){
+        printf("OR OV: %b\n", queue.io.deq.valid)
+    }
+    */
 
     when(output_ready && !io.empty){
         io.output_data := queue.io.deq.bits
@@ -41,11 +48,10 @@ class OutputQueue(dataWidth: Int, queueDepth: Int, vec_fill_size: Int) extends R
     when(queue.io.enq.valid && queue.io.enq.ready){
         printf("ADD: (%d, %d, %d, %d, %d, %d, %d, %d), len: %d\n", queue.io.enq.bits(0), queue.io.enq.bits(1), queue.io.enq.bits(2), queue.io.enq.bits(3), queue.io.enq.bits(4),
             queue.io.enq.bits(5), queue.io.enq.bits(6), queue.io.enq.bits(7), queue.io.count)
-    }
-     Printsetning som printer alle bits i en dequeue-operasjon når valid og ready er true.
+    }*/
+     //Printsetning som printer alle bits i en dequeue-operasjon når valid og ready er true.
     when(queue.io.deq.valid && queue.io.deq.ready){
         printf("POP: (%d, %d, %d, %d, %d, %d, %d, %d), len: %d\n", queue.io.deq.bits(0), queue.io.deq.bits(1), queue.io.deq.bits(2), queue.io.deq.bits(3), queue.io.deq.bits(4),
             queue.io.deq.bits(5), queue.io.deq.bits(6), queue.io.deq.bits(7), queue.io.count)
     }
-    */
 }

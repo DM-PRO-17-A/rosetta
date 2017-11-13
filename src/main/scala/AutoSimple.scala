@@ -39,7 +39,7 @@ class AutoSimple(kernels_path1: String, kernels_path2: String) extends RosettaAc
   val OQ = Module(new OutputQueue(12, 24, 43)).io
   OQ.input_data <> FC2.output_data
   OQ.output_data <> io.output
-  OQ.output_data <> io.output_pulse
+  OQ.output_pulse <> io.output_pulse
   
   when(FC2.output_data.valid){
     for(i <- 0 until 43) {
