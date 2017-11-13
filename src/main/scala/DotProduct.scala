@@ -23,7 +23,7 @@ class DotProduct(input_size: Int, input_width: Int) extends RosettaAccelerator {
     }
 
     if(input_width == 1) {
-        io.data_out := (io.vec_1 zip io.vec_2).map{case (i1: Bits, i2: Bits) => expandInt(UInt(XNOR(i1,i2)))}.fold(SInt(0, width=output_width))(_ + _)
+        io.data_out := (io.vec_1 zip io.vec_2).map{case (i1: Bits, i2: Bits) => Mux(i1 === i2, SInt(1, width=2), SInt(-1, width=2))}.fold(SInt(0, width=output_width))(_ + _)
     } else {
         io.data_out := (io.vec_1 zip io.vec_2).map{case (i1: UInt, i2: Bits) => Mux(i2 === Bits(0), -i1.zext, i1.zext)}.fold(SInt(0, width=output_width))(_ + _)
     }
