@@ -6,27 +6,50 @@ class AutoSimple(kernels_path1: String, kernels_path2: String) extends RosettaAc
   val numMemPorts = 0
   val io = new RosettaAcceleratorIF(numMemPorts) {
     // values to be compared
-    val input = Flipped(Decoupled(Vec.fill(32){SInt(INPUT, 8)}))
+    val input = Vec.fill(32){SInt(INPUT, 8)}
+    val input_pulse = Bool(INPUT)
+    val output_pulse = Bool(INPUT)
+
     // values to be output
-    val output = Decoupled(Vec.fill(16){UInt(OUTPUT, 21)})
+    val output = Vec.fill(43){UInt(OUTPUT, 21)}
+    val empty = Bool(OUTPUT)
+    val full = Bool(OUTPUT)
   }
 
   // sets all values in output to be 0, NECESSARY to avoid error
+  /*
   for(i <- 0 until 43) {
-    io.output.bits := UInt(0)
+    io.output := UInt(0)
   }
+  */
+    
+  val IQ = Module(new ImageQueue(8, 128, 32)).io
+  IQ.input_data <> io.input
+  IQ.input_pulse <> io.input_pulse
 
   val FC1 = Module(new FullyConnected(kernels_path1, 16, 128, 8, 32, 8)).io
-  FC1.input_data <> io.input
-
+  FC1.input_data <> IQ.output_data
 
   val BT = Module(new ComparatorWrapper(21, 16)).io
   BT.input <> FC1.output_data
 
-
   val FC2 = Module(new FullyConnected(kernels_path2, 43, 16, 43, 16, 1)).io
   FC2.input_data <> BT.output
-  FC2.output_data <> io.output
+  
+  val OQ = Module(new OutputQueue(12, 24, 43)).io
+  OQ.input_data <> FC2.output_data
+  OQ.output_data <> io.output
+  OQ.output_data <> io.output_pulse
+  
+  when(FC2.output_data.valid){
+    for(i <- 0 until 43) {
+        printf("FC2 %d: %b\n", UInt(i), FC2.output_data.bits(i))
+    }
+  }
+  printf("COUNT: %d\n", OQ.count)
+  io.empty <> OQ.empty
+  io.full <> IQ.full
+
 
 }
 
@@ -47,20 +70,22 @@ class AutoSimpleTest(c: AutoSimple) extends Tester(c) {
   val weights_length = 128
 
   for (image <- 0 until 1) {
-      poke(c.io.output.ready, 1) // The next component is ready
+      // poke(c.io.output.ready, 1) // The next component is ready
       for (i <- 0 until weights_length by input_size) {
-          step(5) // Some delay while changing input
+          // step(5) // Some delay while changing input
 
           // Poke input and set valid to 1!
-          poke(c.io.input.bits, input.slice(i, i + input_size))
-          poke(c.io.input.valid, 1)
+          poke(c.io.input, input.slice(i, i + input_size))
+          poke(c.io.input_pulse, 1)
+          step(1)
+          poke(c.io.input_pulse, 0)
           step(1) // First step, move from waiting state to calc state
 
-          while (peek(c.io.input.ready) == 0) {
+          while (peek(c.io.full) == 1) {
             step(1) // In calc state, ready == 0 until we're done with current input
           }
 
-          poke(c.io.input.valid, 0) // As soon as ready == 1, the previous component has to set valid to 0 or provide the next input immediately
+          //poke(c.io.input.valid, 0) // As soon as ready == 1, the previous component has to set valid to 0 or provide the next input immediately
 
           step(10)
       }
@@ -88,6 +113,16 @@ class AutoSimpleTest(c: AutoSimple) extends Tester(c) {
     for (i <- 0 until 16) {
       expect(c.FC2.output_data.bits(i), fc_2(i))
     }
+
+    peek(c.OQ.count)
+    step(1)
+    poke(c.io.output_pulse, 1)
+    peek(c.OQ.output_data)
+    step(1)
+    poke(c.io.output_pulse, 0)
+    peek(c.OQ.output_data)
+    step(1)
+    peek(c.OQ.output_data)
 }
 
 

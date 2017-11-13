@@ -13,6 +13,7 @@ class OutputQueue(dataWidth: Int, queueDepth: Int, vec_fill_size: Int) extends R
         val output_pulse = Bool(INPUT)
 
         val empty = Bool(OUTPUT)
+        val count = UInt(OUTPUT, width=8)
 
     }
 
@@ -23,6 +24,7 @@ class OutputQueue(dataWidth: Int, queueDepth: Int, vec_fill_size: Int) extends R
 
     queue.io.enq <> io.input_data
     io.empty := (queue.io.count === UInt(0))
+    io.count := queue.io.count
 
     queue.io.deq.ready := output_ready
 

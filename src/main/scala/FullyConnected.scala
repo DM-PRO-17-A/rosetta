@@ -19,6 +19,8 @@ class FullyConnected(kernels_path: String, kernels_length: Int, weights_length: 
 
         val output_data = Decoupled(Vec.fill(kernels_length){SInt(OUTPUT, output_width)})
     }
+
+    if(kernels_length != kernels_per_it && weights_length != input_per_it) {
     io.input_data.ready := Bool(false)
     io.output_data.valid := Bool(false)
 
@@ -132,6 +134,21 @@ class FullyConnected(kernels_path: String, kernels_length: Int, weights_length: 
           io.output_data.valid := Bool(false)
       }
     }
+    } else {
+        val dot_prods = Array.fill(kernels_per_it){Module(new DotProduct(input_per_it, input_width)).io}
+
+        for (k <- 0 until kernels_per_it) {
+            dot_prods(k).vec_1 := io.input_data.bits
+            for (i <- 0 until input_per_it) {
+                dot_prods(k).vec_2(i) := kernels(k)(i)
+            }
+            io.output_data.bits(k) := dot_prods(k).data_out
+        }
+
+        io.output_data.valid := io.input_data.valid
+        io.input_data.ready := io.output_data.ready
+
+    }
 
 
 }
@@ -142,8 +159,8 @@ class FullyConnectedTests(c: FullyConnected) extends Tester(c) {
 
     val input_size = 16
     val kernels_per_iteration = 2
-    val kernels_length = 12
-    val weights_length = 256
+    val kernels_length = 4
+    val weights_length = 32
 
     for (image <- 0 until 2) {
         poke(c.io.output_data.ready, 1) // The next component is ready
