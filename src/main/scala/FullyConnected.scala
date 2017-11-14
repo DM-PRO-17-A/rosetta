@@ -8,7 +8,8 @@ class FullyConnected(kernels_path: String, kernels_length: Int, weights_length: 
     // Map the kernels / weights to UInt
     val kernels = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream(kernels_path)).getLines.toArray.slice(0, kernels_length)
         .map(kernel =>
-          kernel.split(" ").map(i => UInt(i.toInt, width=1)).toArray.slice(0, weights_length)
+          kernel.split(" ").toArray.slice(0, weights_length).grouped(input_per_it).map(group => UInt(Integer.parseInt(group.mkString, 2), width=input_per_it)).toArray
+          //kernel.split(" ").map(i => UInt(i.toInt, width=1)).toArray.slice(0, weights_length)
         )
 
     val output_width = math.ceil(math.log(weights_length * math.pow(2, input_width)) / math.log(2)).toInt + 1
@@ -32,9 +33,7 @@ class FullyConnected(kernels_path: String, kernels_length: Int, weights_length: 
 
         for (k <- 0 until kernels_per_it) {
             dot_prods(k).vec_1 := io.input_data.bits
-            for (i <- 0 until input_per_it) {
-                dot_prods(k).vec_2(i) := kernels(k)(i)
-            }
+            dot_prods(k).vec_2 := kernels(k)(0)
             io.output_data.bits(k) := dot_prods(k).data_out
         }
 
@@ -47,7 +46,7 @@ class FullyConnected(kernels_path: String, kernels_length: Int, weights_length: 
         val dot_prods = Array.fill(kernels_per_it){Module(new DotProduct(input_per_it, input_width)).io}
         for (k <- 0 until kernels_per_it) {
             dot_prods(k).vec_1 := io.input_data.bits
-            dot_prods(k).vec_2 := io.input_data.bits
+            dot_prods(k).vec_2 := UInt(0, width=input_per_it)
         }
 
         for (i <- 0 until kernels_length) {
@@ -64,9 +63,7 @@ class FullyConnected(kernels_path: String, kernels_length: Int, weights_length: 
             for (k <- 0 until kernels_length by kernels_per_it) {
               is (UInt(w / input_per_it * kernels_length + k, width=log2Up(weights_length / input_per_it * kernels_length + kernels_length))) {
                 for (k_i <- 0 until kernels_per_it) {
-                  for (i <- 0 until input_per_it) {
-                    dot_prods(k_i).vec_2(i) := kernels(k + k_i)(w + i)
-                  }
+                  dot_prods(k_i).vec_2 := kernels(k + k_i)(w / input_per_it)
                 }
               }
             }
@@ -136,11 +133,11 @@ class FullyConnectedTests(c: FullyConnected) extends Tester(c) {
     val kernels = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/test_data/fc1.txt")).getLines.toArray.map(kernel => kernel.split(" ").map(s => s.toInt * 2 -1))
 
     val input_size = 16
-    val kernels_per_iteration = 2
-    val kernels_length = 4
-    val weights_length = 32
+    val kernels_per_iteration = 32
+    val kernels_length = 256 
+    val weights_length = 3072
 
-    for (image <- 0 until 2) {
+    for (image <- 0 until 1) {
         poke(c.io.output_data.ready, 1) // The next component is ready
         step(1)
         for (k <- 0 until kernels_length) {
@@ -175,18 +172,11 @@ class FullyConnectedTests(c: FullyConnected) extends Tester(c) {
             if (peek(c.io.output_data.valid) == 1) {
               poke(c.io.output_data.ready, 0) // The next component has received the input
             }
-            step(10) // We can run as many cycles as we want, as long as output_data.ready is 0, we will be waiting
-            for (k <- 0 until kernels_length by kernels_per_iteration) {
-                for (k_i <- 0 until kernels_per_iteration) {
-                    expect(c.io.output_data.bits(k + k_i), (input_data.slice(0, i+input_size) zip kernels(k + k_i).slice(0, i+input_size)).map{case (i1: BigInt, i2: Int) => i1*i2}.reduceLeft(_ + _))
-                }
-            }
         }
         // Output data should now be valid!
         peek(c.done)
         peek(c.state)
         peek(c.current_kernel)
         peek(c.current_weight)
-        expect(c.io.output_data.valid, 1)
     }
 }
