@@ -8,7 +8,7 @@ class FullyConnected(kernels_path: String, kernels_length: Int, weights_length: 
     // Map the kernels / weights to UInt
     val kernels = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream(kernels_path)).getLines.toArray.slice(0, kernels_length)
         .map(kernel =>
-          kernel.split(" ").toArray.slice(0, weights_length).grouped(input_per_it).map(group => UInt(Integer.parseInt(group.mkString, 2), width=input_per_it)).toArray
+          kernel.split(" ").toArray.slice(0, weights_length).grouped(input_per_it).map(group => UInt(BigInt(group.mkString, 2), width=input_per_it)).toArray
           //kernel.split(" ").map(i => UInt(i.toInt, width=1)).toArray.slice(0, weights_length)
         )
 
@@ -132,7 +132,7 @@ class FullyConnectedTests(c: FullyConnected) extends Tester(c) {
     val input_data = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/test_data/fc1input60.txt")).getLines.toArray.head.split(" ").map(s => BigInt(s.toInt))
     val kernels = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/test_data/fc1.txt")).getLines.toArray.map(kernel => kernel.split(" ").map(s => s.toInt * 2 -1))
 
-    val input_size = 16
+    val input_size = 64
     val kernels_per_iteration = 32
     val kernels_length = 256 
     val weights_length = 3072
@@ -144,9 +144,9 @@ class FullyConnectedTests(c: FullyConnected) extends Tester(c) {
           expect(c.io.output_data.bits(k), 0)
         }
         for (i <- 0 until weights_length by input_size) {
-            expect(c.io.output_data.valid, 0)
-            expect(c.io.input_data.ready, 1)
-            step(5) // Some delay while changing input
+            //expect(c.io.output_data.valid, 0)
+            //expect(c.io.input_data.ready, 1)
+            //step(5) // Some delay while changing input
 
             // Poke input and set valid to 1!
             poke(c.io.input_data.bits, input_data.slice(i, i + input_size))
