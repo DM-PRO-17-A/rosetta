@@ -74,6 +74,7 @@ class FullyConnected(kernels_path: String, kernels_length: Int, weights_length: 
         switch(state) {
             is (done) {
               io.output.valid := Bool(true)
+              io.input.ready := Bool(false)
               when (io.output.ready) {
                 // Reset everything and change state!
                 for (k <- 0 until kernels_length) {
@@ -87,6 +88,7 @@ class FullyConnected(kernels_path: String, kernels_length: Int, weights_length: 
             is (waiting) {
               io.input.ready := Bool(true)
               when (io.input.valid) {
+                io.input.ready := Bool(false)
                 state := calc
                 current_kernel := UInt(0)
               }
@@ -95,30 +97,26 @@ class FullyConnected(kernels_path: String, kernels_length: Int, weights_length: 
                 when (current_kernel === UInt(kernels_length)) {
                   when (current_weight === UInt(weights_length - input_per_it)) {
                     state := done
-                    io.input.ready := Bool(false)
                   } .otherwise {
-                    io.input.ready := Bool(true)
                     state := waiting
                   }
 
                   current_weight := current_weight + UInt(input_per_it)
 
                 } .otherwise {
-                  when (io.input.valid) {
-                    switch (weight_step % UInt(kernels_length)) {
-                      for (k <- 0 until kernels_length by kernels_per_it) {
-                        is (UInt(k, width=log2Up(kernels_length))) {
-                          for (k_i <- 0 until kernels_per_it) {
-                            acc(k + k_i) := acc(k + k_i) + dot_prods(k_i).output_data
-                          }
+                  switch (weight_step % UInt(kernels_length)) {
+                    for (k <- 0 until kernels_length by kernels_per_it) {
+                      is (UInt(k, width=log2Up(kernels_length))) {
+                        for (k_i <- 0 until kernels_per_it) {
+                          acc(k + k_i) := acc(k + k_i) + dot_prods(k_i).output_data
                         }
                       }
                     }
+                  }
 
-                    current_kernel := current_kernel + UInt(kernels_per_it)
-                    io.input.ready := Bool(false)
-                    io.output.valid := Bool(false)
-                }
+                  current_kernel := current_kernel + UInt(kernels_per_it)
+                  io.input.ready := Bool(false)
+                  io.output.valid := Bool(false)
               }
             }
         }
@@ -137,32 +135,26 @@ class FullyConnectedTests(c: FullyConnected) extends Tester(c) {
     val kernels_length = 64
     val weights_length = 1024
 
-    for (image <- 0 until 1) {
+    for (image <- 0 until 2) {
         poke(c.io.output.ready, 1) // The next component is ready
         step(1)
         for (k <- 0 until kernels_length) {
           expect(c.io.output.bits(k), 0)
         }
         for (i <- 0 until weights_length by input_size) {
-            //expect(c.io.output.valid, 0)
-            //expect(c.io.input.ready, 1)
-            //step(5) // Some delay while changing input
-
-            // Poke input and set valid to 1!
             poke(c.io.input.bits, input.slice(i, i + input_size))
             poke(c.io.input.valid, 1)
-            step(1) // First step, move from waiting state to calc state
+            step(1)
 
             while (peek(c.io.input.ready) == 0) {
-              step(1) // In calc state, ready == 0 until we're done with current input
+              step(1)
               peek(c.state)
               peek(c.current_kernel)
               peek(c.current_weight)
             }
 
-            poke(c.io.input.valid, 0) // As soon as ready == 1, the previous component has to set valid to 0 or provide the next input immediately
+            poke(c.io.input.valid, 0)
 
-            // Nothing happens even after 10 steps, we're in the frame_wait state, and we can verify that!
             for (k <- 0 until kernels_length by kernels_per_iteration) {
                 for (k_i <- 0 until kernels_per_iteration) {
                     expect(c.io.output.bits(k + k_i), (input.slice(0, i+input_size) zip kernels(k + k_i).slice(0, i+input_size)).map{case (i1: BigInt, i2: Int) => i1*i2}.reduceLeft(_ + _))

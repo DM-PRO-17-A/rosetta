@@ -4,105 +4,140 @@ import Chisel._
 
 class AutoSimple(kernels_path1: String, kernels_path2: String) extends RosettaAccelerator {
   val numMemPorts = 0
+
+  val input_width = 8
+
+  val kernels_per_it = 8
+  val kernels_length = 16
+
+  val input_per_it = 32
+  val weights_length = 128
+
+  val output_width = math.ceil(math.log(weights_length * math.pow(2, input_width)) / math.log(2)).toInt + 1
+
   val io = new RosettaAcceleratorIF(numMemPorts) {
     // values to be compared
-    val input = Vec.fill(32){SInt(INPUT, 8)}
+    val input_data = Vec.fill(32){SInt(INPUT, 8)}
     val input_pulse = Bool(INPUT)
     val output_pulse = Bool(INPUT)
 
     // values to be output
-    val output = Vec.fill(43){UInt(OUTPUT, 21)}
+    val output_data = Vec.fill(16){Bits(OUTPUT, output_width)}
     val empty = Bool(OUTPUT)
     val full = Bool(OUTPUT)
   }
 
-  val IQ = Module(new ImageQueue(8, 128, 32)).io
-  IQ.input_data <> io.input
-  IQ.input_pulse <> io.input_pulse
+  val IQ = Module(new ImageQueue(input_width, 128, input_per_it)) // 128 * input_size numbers
+  IQ.io.input_data <> io.input_data
+  IQ.io.input_pulse <> io.input_pulse
 
-  val FC1 = Module(new FullyConnected(kernels_path1, 16, 128, 8, 32, 8)).io
-  FC1.input <> IQ.output
-  FC1.output <> io.output
+  val FC1 = Module(new FullyConnected(kernels_path1, kernels_length, weights_length, kernels_per_it, input_per_it, input_width))
+  FC1.io.input <> IQ.io.output
 
-  val BT = Module(new ComparatorWrapper(21, 16)).io
-  BT.input <> FC1.output
+  //val BT = Module(new ComparatorWrapper(21, 16)).io
+  //BT.input <> FC1.output
 
-  val FC2 = Module(new FullyConnected(kernels_path2, 43, 16, 43, 16, 1)).io
-  FC2.input <> BT.output
+  //val FC2 = Module(new FullyConnected(kernels_path2, 43, 16, 43, 16, 1)).io
+  //FC2.input <> BT.output
 
-  val OQ = Module(new OutputQueue(12, 24, 43)).io
-  OQ.input_data <> FC2.output
-  OQ.output_data <> io.output
-  OQ.output_pulse <> io.output_pulse
+  val OQ = Module(new OutputQueue(FC1.output_width, 24, 16))
+  OQ.io.input <> FC1.io.output
+  OQ.io.output_data <> io.output_data
+  OQ.io.output_pulse <> io.output_pulse
 
-  when(FC2.output.valid){
-    for(i <- 0 until 43) {
-        printf("FC2 %d: %b\n", UInt(i), FC2.output.bits(i))
-    }
-  }
-  printf("COUNT: %d\n", OQ.count)
-  io.empty <> OQ.empty
-  io.full <> IQ.full
-
-
+  io.empty <> OQ.io.empty
+  io.full <> IQ.io.full
 }
 
+
 class AutoSimpleTest(c: AutoSimple) extends Tester(c) {
-  val input = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/test_data/fc1input60.txt")).getLines.toArray.head.split(" ").map(s => BigInt(s.toInt))
-  val output_result = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/test_data/fc2output60.txt")).getLines.toArray.head.split(" ").map(s => BigInt(s.toInt))
+    def LoadResource(path: String) : Array[String] = {
+        scala.io.Source.fromInputStream(this.getClass.getResourceAsStream(path)).getLines.toArray
+    }
 
-  // val kernels = scala.io.Source.fromInputStream(thi3s.getClass.getResourceAsStream("/test_data/fc1.txt")).getLines.toArray.map(kernel => kernel.split(" ").map(s => s.toInt * 2 -1))
+    val input           = LoadResource("/test_data/fc1input60.txt").head.split(" ").map(s => BigInt(s.toInt))
+    val fc_1_weights    = LoadResource("/test_data/fc1.txt").map(kernel => kernel.split(" ").map(s => s.toInt * 2 -1))
+    val fc_2_weights    = LoadResource("/test_data/fc2.txt").map(kernel => kernel.split(" ").map(s => s.toInt * 2 -1))
+    val thresholds      = LoadResource("/test_data/thresholds.txt").map(t => t.split(", ").map(_.toInt)).toArray.head
+    val expected_output = LoadResource("/test_data/fc2output60.txt").head.split(" ").map(s => BigInt(s.toInt))
 
-  val input_size = 32
-  val kernels_per_iteration = 8
-  val kernels_length = 16
-  val weights_length = 128
+    val images                = 24
+    val kernels_per_iteration = 8
+    val kernels_length        = 16
+    val input_size            = 32
+    val weights_length        = 128
 
-  for (image <- 0 until 1) {
-      // poke(c.io.output.ready, 1) // The next component is ready
+    def FC1_Result(n: Int) : Array[BigInt] = {
+      val offset = n * weights_length
+      // n = 0, 0-128
+      // n = 1, 128-256
+      // n = 2, 256-184
+      return fc_1_weights.map(kernel => (input.slice(offset, offset + weights_length) zip kernel.slice(0, weights_length))
+        .map{case (i1: BigInt, i2: Int) => i1*i2}.reduceLeft(_ + _)
+      )
+    }
+
+    val fc_1 = FC1_Result(0)
+
+    val bt_output = (fc_1 zip thresholds.slice(0, kernels_length))
+      .map{case (i1: BigInt, i2: Int) => if (i2 > i1) 0 else 1}
+    val bt_output_real = (fc_1 zip thresholds.slice(0, kernels_length))
+      .map{case (i1: BigInt, i2: Int) => if (i2 > i1) -1 else 1}
+
+    val fc_2 = fc_2_weights.map(kernel => (bt_output_real zip kernel.slice(0, 16))
+      .map{case (i1: Int, i2: Int) => i1*i2}
+      .reduceLeft(_ + _))
+      .map(i => BigInt(i)).toArray
+
+    // Insert image into IQ
+    for (n <- 0 until images) {
+      val offset = n * weights_length
       for (i <- 0 until weights_length by input_size) {
-          // step(5) // Some delay while changing input
-
-          // Poke input and set valid to 1!
-          poke(c.io.input, input.slice(i, i + input_size))
-          poke(c.io.input_pulse, 1)
-          step(1)
-          poke(c.io.input_pulse, 0)
-          step(1) // First step, move from waiting state to calc state
-
-          while (peek(c.io.full) == 1) {
-            step(1) // In calc state, ready == 0 until we're done with current input
-          }
-
-          //poke(c.io.input.valid, 0) // As soon as ready == 1, the previous component has to set valid to 0 or provide the next input immediately
-
-          step(10)
+        poke(c.io.input_pulse, 1)
+        step(1)
+        poke(c.io.input_data, input.slice(offset + i, offset + i + input_size))
+        println(offset + i, offset + i + input_size)
+        poke(c.io.input_pulse, 0)
+        step(1)
       }
+    }
+
+    var n = 0
+    // While there is still shit in the input queue
+    while (peek(c.IQ.io.empty) == 0) {
       step(1)
 
-      step(10)
+      // If theres something in the output queue, we can check it for lulz!
+      while(peek(c.OQ.queue.io.count) > 0) {
+        poke(c.io.output_pulse, 1)
+        step(1)
+        poke(c.io.output_pulse, 0)
+        val FC_N_Output = FC1_Result(n)
+        for (k <- 0 until kernels_length) {
+          expect(c.io.output_data(k), FC_N_Output(k))
+        }
+        n += 1
+        step(1)
+      }
+
+      // While waiting for the current calculation to finish
+      while(peek(c.FC1.io.output.valid) == 0) {
+        step(1)
+      }
+
+      step(1)
     }
-    val fc_1_weights = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/test_data/fc1.txt")).getLines.toArray.map(kernel => kernel.split(" ").map(s => s.toInt * 2 -1))
-    val fc_2_weights = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/test_data/fc2.txt")).getLines.toArray.map(kernel => kernel.split(" ").map(s => s.toInt * 2 -1))
-    val thresholds = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/test_data/thresholds.txt")).getLines.toArray.map(t => t.split(", ").map(_.toInt)).toArray.head
-
-    val fc_1 = fc_1_weights.map(kernel => (input.slice(0, weights_length) zip kernel.slice(0, weights_length)).map{case (i1: BigInt, i2: Int) => i1*i2}.reduceLeft(_ + _))
-    for (k <- 0 until kernels_length) {
-      expect(c.FC1.output.bits(k), fc_1(k))
+    while(peek(c.OQ.queue.io.count) > 0) {
+      poke(c.io.output_pulse, 1)
+      step(1)
+      poke(c.io.output_pulse, 0)
+      val FC_N_Output = FC1_Result(n)
+      for (k <- 0 until kernels_length) {
+        expect(c.io.output_data(k), FC_N_Output(k))
+      }
+      n += 1
+      step(1)
     }
-
-    val bt_output = (fc_1 zip thresholds.slice(0, kernels_length)).map{case (i1: BigInt, i2: Int) => if (i2 > i1) 0 else 1}
-    val bt_output_real = (fc_1 zip thresholds.slice(0, kernels_length)).map{case (i1: BigInt, i2: Int) => if (i2 > i1) -1 else 1}
-    for (k <- 0 until kernels_length) {
-      expect(c.BT.output.bits(k), bt_output(k))
-    }
-
-
-    val fc_2 = fc_2_weights.map(kernel => (bt_output_real zip kernel.slice(0, 16)).map{case (i1: Int, i2: Int) => i1*i2}.reduceLeft(_ + _)).map(i => BigInt(i)).toArray
-    for (i <- 0 until 16) {
-      expect(c.FC2.output.bits(i), fc_2(i))
-    }
-
 }
 
 
