@@ -6,7 +6,7 @@ import sys.process._
 object Settings {
   // Rosetta will use myInstFxn to instantiate your accelerator
   // edit below to change which accelerator will be instantiated
-  val myInstFxn = {() => new FullyConnected("/test_data/fc1.txt", 256, 3072, 32, 32, 8)}
+  val myInstFxn = {() => new AutoSimple("/test_data/fc1.txt", "/test_data/fc2.txt")}
 }
 
 // call this object's main method to generate Chisel Verilog and C++ emulation
