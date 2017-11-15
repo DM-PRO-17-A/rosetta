@@ -15,6 +15,9 @@ class TestRegOps() extends RosettaAccelerator {
     val op = Vec.fill(2) {UInt(INPUT, width = 64)}
     val sum = UInt(OUTPUT, width = 64)
     val cc = UInt(OUTPUT, width = 32)
+
+    val out_pins = UInt(INPUT, width=4)
+    val in_pins = UInt(OUTPUT, width=4)
   }
   // wire sum output to sum of op inputs
   io.sum := io.op(0) + io.op(1)
@@ -39,5 +42,14 @@ class TestRegOps() extends RosettaAccelerator {
   io.signature := makeDefaultSignature()
   // use the buttons to control the LEDs
   io.led := io.btn
+
+  //io.output_pins <> io.out_pins
+  /*
+  for(i <- 0 until 8) {
+    io.output_pins(i) := UInt(1, width=1)
+  }
+  */
+  io.ck_out := io.out_pins
+  io.in_pins := io.ck_in
 }
 
