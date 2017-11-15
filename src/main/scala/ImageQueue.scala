@@ -10,7 +10,7 @@ class ImageQueue(dataWidth: Int, queueDepth: Int, vec_fill_size: Int) extends Ro
         val input_data = Vec.fill(vec_fill_size){UInt(INPUT, width=dataWidth)}
         val input_pulse = Bool(INPUT)
 
-        val output_data = Decoupled(Vec.fill(vec_fill_size){UInt(OUTPUT, dataWidth)})
+        val output = Decoupled(Vec.fill(vec_fill_size){UInt(OUTPUT, dataWidth)})
         val full = Bool(OUTPUT)
         val empty = Bool(OUTPUT)
 
@@ -25,7 +25,7 @@ class ImageQueue(dataWidth: Int, queueDepth: Int, vec_fill_size: Int) extends Ro
     io.full := (queue.io.count === UInt(queueDepth -1))
     io.empty := (queue.io.count === UInt(0))
 
-    io.output_data <> queue.io.deq
+    io.output <> queue.io.deq
 }
 
 class ImageQueueTests(c: ImageQueue) extends Tester(c) {
@@ -54,17 +54,17 @@ class ImageQueueTests(c: ImageQueue) extends Tester(c) {
   expect(c.io.empty, 0)
   expect(c.io.full, 0)
 
-  poke(c.io.output_data.ready, 1)
-  expect(c.io.output_data.valid, 0)
+  poke(c.io.output.ready, 1)
+  expect(c.io.output.valid, 0)
   step(1)
 
   // This cycle the data will be added to the registers
-  // (because of output_data.ready) and output will be ready next cycle
-  poke(c.io.output_data.ready, 0)
-  expect(c.io.output_data.valid, 0)
+  // (because of output.ready) and output will be ready next cycle
+  poke(c.io.output.ready, 0)
+  expect(c.io.output.valid, 0)
   step(1)
 
   // Output is ready and valid!
-  expect(c.io.output_data.valid, 1)
+  expect(c.io.output.valid, 1)
   peek(c.queue.io.count)
 }

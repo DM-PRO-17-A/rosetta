@@ -6,7 +6,7 @@ import sys.process._
 object Settings {
   // Rosetta will use myInstFxn to instantiate your accelerator
   // edit below to change which accelerator will be instantiated
-  val myInstFxn = {() => new GPIOPins()}
+  val myInstFxn = {() => new FullyConnected("/test_data/fc1.txt", 256, 3072, 32, 32, 8)}
 }
 
 // call this object's main method to generate Chisel Verilog and C++ emulation
@@ -19,14 +19,10 @@ object ChiselMain {
     //chiselMainTest(args, () => Module(new Mux2())){c => new Mux2Tests(c)}
     //chiselMainTest(args, () => Module(new Comparator(8))){c => new ComparatorTest(c)}
     //chiselMainTest(args, () => Module(new ComparatorWrapper(12, 256))){c => new ComparatorWrapperTest(c)}
-    //chiselMainTest(args, () => Module(new AutoTest(12, 4))){c => new AutoTestTest(c)}
-    //chiselMainTest(args, () => Module(new DotProduct(4,2))){c => new DotProductTests(c)}
-    //chiselMainTest(args, () => Module(new DotProduct(5, 8))){c => new DotProductTests(c)}
     //chiselMainTest(args, () => Module(new ROM())){c => new ROMTests(c)}
     //chiselMainTest(args, () => Module(new AutoSimple("/test_data/fc1.txt", "/test_data/fc2.txt"))){c => new AutoSimpleTest(c)}
-    //chiselMainTest(args, () => Module(new DotProduct(5, 8))){c => new DotProductTests(c)}
-    //chiselMainTest(args, () => Module(new ROM())){c => new ROMTests(c)}
-    //chiselMainTest(args, () => Module(new FullyConnected("/test_data/fc1.txt", 256, 3072, 32, 64, 8))){c => new FullyConnectedTests(c)}
+    chiselMainTest(args, () => Module(new DotProduct(5, 8))){c => new DotProductTests(c)}
+    chiselMainTest(args, () => Module(new FullyConnected("/test_data/fc1.txt", 64, 1024, 32, 64, 8))){c => new FullyConnectedTests(c)}
     chiselMainTest(args, () => Module(new ImageQueue(8, 128, 32))){c => new ImageQueueTests(c)}
   }
 }

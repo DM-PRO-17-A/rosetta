@@ -16,34 +16,28 @@ class AutoSimple(kernels_path1: String, kernels_path2: String) extends RosettaAc
     val full = Bool(OUTPUT)
   }
 
-  // sets all values in output to be 0, NECESSARY to avoid error
-  /*
-  for(i <- 0 until 43) {
-    io.output := UInt(0)
-  }
-  */
-    
   val IQ = Module(new ImageQueue(8, 128, 32)).io
   IQ.input_data <> io.input
   IQ.input_pulse <> io.input_pulse
 
   val FC1 = Module(new FullyConnected(kernels_path1, 16, 128, 8, 32, 8)).io
-  FC1.input_data <> IQ.output_data
+  FC1.input <> IQ.output
+  FC1.output <> io.output
 
   val BT = Module(new ComparatorWrapper(21, 16)).io
-  BT.input <> FC1.output_data
+  BT.input <> FC1.output
 
   val FC2 = Module(new FullyConnected(kernels_path2, 43, 16, 43, 16, 1)).io
-  FC2.input_data <> BT.output
-  
+  FC2.input <> BT.output
+
   val OQ = Module(new OutputQueue(12, 24, 43)).io
-  OQ.input_data <> FC2.output_data
+  OQ.input_data <> FC2.output
   OQ.output_data <> io.output
   OQ.output_pulse <> io.output_pulse
-  
-  when(FC2.output_data.valid){
+
+  when(FC2.output.valid){
     for(i <- 0 until 43) {
-        printf("FC2 %d: %b\n", UInt(i), FC2.output_data.bits(i))
+        printf("FC2 %d: %b\n", UInt(i), FC2.output.bits(i))
     }
   }
   printf("COUNT: %d\n", OQ.count)
@@ -54,11 +48,6 @@ class AutoSimple(kernels_path1: String, kernels_path2: String) extends RosettaAc
 }
 
 class AutoSimpleTest(c: AutoSimple) extends Tester(c) {
-  // val input = Array[BigInt](1, 2)
-  // poke(c.io.input, input)
-  // step(16)
-  // poke(c.io.input.valid, 1)
-  // peek(c.io.output)
   val input = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/test_data/fc1input60.txt")).getLines.toArray.head.split(" ").map(s => BigInt(s.toInt))
   val output_result = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/test_data/fc2output60.txt")).getLines.toArray.head.split(" ").map(s => BigInt(s.toInt))
 
@@ -99,7 +88,7 @@ class AutoSimpleTest(c: AutoSimple) extends Tester(c) {
 
     val fc_1 = fc_1_weights.map(kernel => (input.slice(0, weights_length) zip kernel.slice(0, weights_length)).map{case (i1: BigInt, i2: Int) => i1*i2}.reduceLeft(_ + _))
     for (k <- 0 until kernels_length) {
-      expect(c.FC1.output_data.bits(k), fc_1(k))
+      expect(c.FC1.output.bits(k), fc_1(k))
     }
 
     val bt_output = (fc_1 zip thresholds.slice(0, kernels_length)).map{case (i1: BigInt, i2: Int) => if (i2 > i1) 0 else 1}
@@ -111,18 +100,9 @@ class AutoSimpleTest(c: AutoSimple) extends Tester(c) {
 
     val fc_2 = fc_2_weights.map(kernel => (bt_output_real zip kernel.slice(0, 16)).map{case (i1: Int, i2: Int) => i1*i2}.reduceLeft(_ + _)).map(i => BigInt(i)).toArray
     for (i <- 0 until 16) {
-      expect(c.FC2.output_data.bits(i), fc_2(i))
+      expect(c.FC2.output.bits(i), fc_2(i))
     }
 
-    peek(c.OQ.count)
-    step(1)
-    poke(c.io.output_pulse, 1)
-    peek(c.OQ.output_data)
-    step(1)
-    poke(c.io.output_pulse, 0)
-    peek(c.OQ.output_data)
-    step(1)
-    peek(c.OQ.output_data)
 }
 
 
