@@ -26,7 +26,8 @@ object ChiselMain {
     //chiselMainTest(args, () => Module(new AutoSimple("/test_data/fc1.txt", "/test_data/fc2.txt"))){c => new AutoSimpleTest(c)}
     //chiselMainTest(args, () => Module(new DotProduct(5, 8))){c => new DotProductTests(c)}
     //chiselMainTest(args, () => Module(new ROM())){c => new ROMTests(c)}
-    chiselMainTest(args, () => Module(new FullyConnected("/test_data/fc1.txt", 256, 3072, 32, 64, 8))){c => new FullyConnectedTests(c)}
+    //chiselMainTest(args, () => Module(new FullyConnected("/test_data/fc1.txt", 256, 3072, 32, 64, 8))){c => new FullyConnectedTests(c)}
+    chiselMainTest(args, () => Module(new ImageQueue(8, 128, 32))){c => new ImageQueueTests(c)}
   }
 }
 
