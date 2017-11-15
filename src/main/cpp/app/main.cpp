@@ -19,6 +19,9 @@ bool Run_TestRegOps(WrapperRegDriver * platform) {
   */
 
   t.set_out_pins(10);
+  while(true){
+    cout << t.get_pcb_btns() << endl;
+  }
 }
 
 int main()

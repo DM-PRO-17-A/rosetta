@@ -77,8 +77,11 @@ connect_bd_net [get_bd_pins /PYNQWrapper_0/io_led5_r] [get_bd_ports led5_r]
 create_bd_port -dir O -from 3 -to 0 io_ck_out
 connect_bd_net [get_bd_pins /PYNQWrapper_0/io_ck_out] [get_bd_ports io_ck_out]
 
-create_bd_port -dir I -from 3 -to 0 io_ck_in
+create_bd_port -dir I -from 1 -to 0 io_ck_in
 connect_bd_net [get_bd_pins /PYNQWrapper_0/io_ck_in] [get_bd_ports io_ck_in]
+
+create_bd_port -dir I -from 2 -to 0 io_pbtn
+connect_bd_net [get_bd_pins /PYNQWrapper_0/io_pbtn] [get_bd_ports io_pbtn]
 
 # connect accelerator AXI masters to Zynq PS
 #apply_bd_automation -rule xilinx.com:bd_rule:axi4 -config {Master "/PYNQWrapper_0/mem0" Clk "Auto" }  [get_bd_intf_pins processing_system7_0/S_AXI_HP0]

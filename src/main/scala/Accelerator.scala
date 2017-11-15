@@ -18,6 +18,7 @@ class TestRegOps() extends RosettaAccelerator {
 
     val out_pins = UInt(INPUT, width=4)
     val in_pins = UInt(OUTPUT, width=4)
+    val pcb_btns = UInt(OUTPUT, width=3)
   }
   // wire sum output to sum of op inputs
   io.sum := io.op(0) + io.op(1)
@@ -51,5 +52,6 @@ class TestRegOps() extends RosettaAccelerator {
   */
   io.ck_out := io.out_pins
   io.in_pins := io.ck_in
+  io.pcb_btns := io.pbtn
 }
 
