@@ -1,11 +1,11 @@
 #include <iostream>
 using namespace std;
 
-#include "TestRegOps.hpp"
+#include "GPIOPins.hpp"
 #include "platform.h"
 
-bool Run_TestRegOps(WrapperRegDriver * platform) {
-  TestRegOps t(platform);
+bool Run_GPIOPins(WrapperRegDriver * platform) {
+  GPIOPins t(platform);
 
   /*
   t.set_out_pins_0(1);
@@ -18,9 +18,12 @@ bool Run_TestRegOps(WrapperRegDriver * platform) {
   t.set_out_pins_7(1);
   */
 
-  t.set_out_pins(10);
+  t.set_out_pins_0(1);
+  t.set_out_pins_1(1);
+  t.set_out_pins_2(1);
+  t.set_out_pins_3(1);
   while(true){
-    cout << t.get_pcb_btns() << endl;
+    cout << "IN0: " << t.get_in_pins_0() << " IN1: " << t.get_in_pins_1() << " BTN: " << t.get_pcb_btn() << endl;
   }
 }
 
@@ -28,7 +31,7 @@ int main()
 {
   WrapperRegDriver * platform = initPlatform();
 
-  Run_TestRegOps(platform);
+  Run_GPIOPins(platform);
 
   deinitPlatform(platform);
 

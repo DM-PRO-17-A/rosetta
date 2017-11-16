@@ -87,16 +87,16 @@ set_property -dict { PACKAGE_PIN L19   IOSTANDARD LVCMOS33 } [get_ports { io_btn
 
 ##ChipKit Digital I/O Low
 
-#set_property -dict { PACKAGE_PIN T14   IOSTANDARD LVCMOS33 } [get_ports { io_ck_out[0] }]; #IO_L5P_T0_34 Sch=io_ck[0]
-#set_property -dict { PACKAGE_PIN U12   IOSTANDARD LVCMOS33 } [get_ports { io_ck_out[1] }]; #IO_L2N_T0_34 Sch=io_ck[1]
+#set_property -dict { PACKAGE_PIN T14   IOSTANDARD LVCMOS33 } [get_ports { io_ck_out[0] }]; #IO_L5P_T0_34 Sch=ck_io[0]
+#set_property -dict { PACKAGE_PIN U12   IOSTANDARD LVCMOS33 } [get_ports { io_ck_out[1] }]; #IO_L2N_T0_34 Sch=ck_io[1]
 #set_property -dict { PACKAGE_PIN U13   IOSTANDARD LVCMOS33 } [get_ports { io_ck_out[2] }]; #IO_L3P_T0_DQS_PUDC_B_34 Sch=ck_io[2]
 #set_property -dict { PACKAGE_PIN V13   IOSTANDARD LVCMOS33 } [get_ports { io_ck_out[3] }]; #IO_L3N_T0_DQS_34 Sch=ck_io[3]
 #set_property -dict { PACKAGE_PIN V15   IOSTANDARD LVCMOS33 } [get_ports { io_ck_in[0] }]; #IO_L10P_T1_34 Sch=ck_io[4]
 #set_property -dict { PACKAGE_PIN T15   IOSTANDARD LVCMOS33 } [get_ports { io_ck_in[1] }]; #IO_L5N_T0_34 Sch=ck_io[5]
-set_property -dict { PACKAGE_PIN R16   IOSTANDARD LVCMOS33 } [get_ports { io_pbtn[0] }]; #IO_L19P_T3_34 Sch=ck_io[6]
-set_property -dict { PACKAGE_PIN U17   IOSTANDARD LVCMOS33 } [get_ports { io_pbtn[1] }]; #IO_L9N_T1_DQS_34 Sch=ck_io[7]
-#set_property -dict { PACKAGE_PIN V17   IOSTANDARD LVCMOS33 } [get_ports { ck_io[8] }]; #IO_L21P_T3_DQS_34 Sch=ck_io[8]
-set_property -dict { PACKAGE_PIN V18   IOSTANDARD LVCMOS33 } [get_ports { io_pbtn[2] }]; #IO_L21N_T3_DQS_34 Sch=ck_io[9]
+#set_property -dict { PACKAGE_PIN R16   IOSTANDARD LVCMOS33 } [get_ports { io_pbtn[0] }]; #IO_L19P_T3_34 Sch=ck_io[6]
+#set_property -dict { PACKAGE_PIN U17   IOSTANDARD LVCMOS33 } [get_ports { io_pbtn[1] }]; #IO_L9N_T1_DQS_34 Sch=ck_io[7]
+set_property -dict { PACKAGE_PIN V17   IOSTANDARD LVCMOS33 } [get_ports { io_pbtn }]; #IO_L21P_T3_DQS_34 Sch=ck_io[8]
+#set_property -dict { PACKAGE_PIN V18   IOSTANDARD LVCMOS33 } [get_ports { io_pbtn }]; #IO_L21N_T3_DQS_34 Sch=ck_io[9]
 #set_property -dict { PACKAGE_PIN T16   IOSTANDARD LVCMOS33 } [get_ports { ck_io[10] }]; #IO_L9P_T1_DQS_34 Sch=ck_io[10]
 #set_property -dict { PACKAGE_PIN R17   IOSTANDARD LVCMOS33 } [get_ports { ck_io[11] }]; #IO_L19N_T3_VREF_34 Sch=ck_io[11]
 #set_property -dict { PACKAGE_PIN P18   IOSTANDARD LVCMOS33 } [get_ports { ck_io[12] }]; #IO_L23N_T3_34 Sch=ck_io[12]

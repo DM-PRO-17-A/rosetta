@@ -80,7 +80,7 @@ connect_bd_net [get_bd_pins /PYNQWrapper_0/io_ck_out] [get_bd_ports io_ck_out]
 create_bd_port -dir I -from 1 -to 0 io_ck_in
 connect_bd_net [get_bd_pins /PYNQWrapper_0/io_ck_in] [get_bd_ports io_ck_in]
 
-create_bd_port -dir I -from 2 -to 0 io_pbtn
+create_bd_port -dir I io_pbtn
 connect_bd_net [get_bd_pins /PYNQWrapper_0/io_pbtn] [get_bd_ports io_pbtn]
 
 # connect accelerator AXI masters to Zynq PS
