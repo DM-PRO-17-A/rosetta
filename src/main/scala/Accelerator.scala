@@ -10,11 +10,17 @@ import Chisel._
 // sum: output 64-bit signal, equal to op(0)+op(1)
 // cc: the number of clock cycles that have elapsed since last reset
 class TestRegOps() extends RosettaAccelerator {
+  val nin_pins = 2
+  val nout_pins = 4
   val numMemPorts = 0
   val io = new RosettaAcceleratorIF(numMemPorts) {
     val op = Vec.fill(2) {UInt(INPUT, width = 64)}
     val sum = UInt(OUTPUT, width = 64)
     val cc = UInt(OUTPUT, width = 32)
+
+    val out_pins = Vec.fill(4){UInt(INPUT, width=1)}
+    val in_pins = Vec.fill(2){UInt(OUTPUT, width=1)}
+    val pcb_btn = UInt(OUTPUT, width=1)
   }
   // wire sum output to sum of op inputs
   io.sum := io.op(0) + io.op(1)
@@ -39,5 +45,20 @@ class TestRegOps() extends RosettaAccelerator {
   io.signature := makeDefaultSignature()
   // use the buttons to control the LEDs
   io.led := io.btn
+
+  //io.output_pins <> io.out_pins
+  /*
+  for(i <- 0 until 8) {
+    io.output_pins(i) := UInt(1, width=1)
+  }
+  */
+  io.ck_out := UInt(7, width=nout_pins)
+  for(i <- 0 until nout_pins){
+    io.ck_out(i) := io.out_pins(i)
+  }
+  for(i <- 0 until nin_pins){
+    io.in_pins(i) := io.ck_in(i)
+  }
+  io.pcb_btn := io.pbtn
 }
 
