@@ -55,26 +55,52 @@ bool Run_AutoSimple(WrapperRegDriver* platform) {
       as.set_input_pulse(0);
     }
 
-    for (int n = 0; n < 3072 / 128; n++) {
-      int offset = 16 * n;
+    for (int n = 0; n < 2; n++) {
       as.set_output_pulse(1);
       as.set_output_pulse(0);
-      cout << (int) as.get_output_data_0() << endl;
-      cout << (int) as.get_output_data_1() << endl;
-      cout << (int) as.get_output_data_2() << endl;
-      cout << (int) as.get_output_data_3() << endl;
-      cout << (int) as.get_output_data_4() << endl;
-      cout << (int) as.get_output_data_5() << endl;
-      cout << (int) as.get_output_data_6() << endl;
-      cout << (int) as.get_output_data_7() << endl;
-      cout << (int) as.get_output_data_8() << endl;
-      cout << (int) as.get_output_data_9() << endl;
-      cout << (int) as.get_output_data_10() << endl;
-      cout << (int) as.get_output_data_11() << endl;
-      cout << (int) as.get_output_data_12() << endl;
-      cout << (int) as.get_output_data_13() << endl;
-      cout << (int) as.get_output_data_14() << endl;
-      cout << (int) as.get_output_data_15() << endl << endl;t
+      cout << hex << (int) as.get_output_data_0() << endl;
+      cout << hex << (int) as.get_output_data_1() << endl;
+      cout << hex << (int) as.get_output_data_2() << endl;
+      cout << hex << (int) as.get_output_data_3() << endl;
+      cout << hex << (int) as.get_output_data_4() << endl;
+      cout << hex << (int) as.get_output_data_5() << endl;
+      cout << hex << (int) as.get_output_data_6() << endl;
+      cout << hex << (int) as.get_output_data_7() << endl;
+      cout << hex << (int) as.get_output_data_8() << endl;
+      cout << hex << (int) as.get_output_data_9() << endl;
+      cout << hex << (int) as.get_output_data_10() << endl;
+      cout << hex << (int) as.get_output_data_11() << endl;
+      cout << hex << (int) as.get_output_data_12() << endl;
+      cout << hex << (int) as.get_output_data_13() << endl;
+      cout << hex << (int) as.get_output_data_14() << endl;
+      cout << hex << (int) as.get_output_data_15() << endl;
+      cout << hex << (int) as.get_output_data_16() << endl;
+      cout << hex << (int) as.get_output_data_17() << endl;
+      cout << hex << (int) as.get_output_data_18() << endl;
+      cout << hex << (int) as.get_output_data_19() << endl;
+      cout << hex << (int) as.get_output_data_20() << endl;
+      cout << hex << (int) as.get_output_data_21() << endl;
+      cout << hex << (int) as.get_output_data_22() << endl;
+      cout << hex << (int) as.get_output_data_23() << endl;
+      cout << hex << (int) as.get_output_data_24() << endl;
+      cout << hex << (int) as.get_output_data_25() << endl;
+      cout << hex << (int) as.get_output_data_26() << endl;
+      cout << hex << (int) as.get_output_data_27() << endl;
+      cout << hex << (int) as.get_output_data_28() << endl;
+      cout << hex << (int) as.get_output_data_29() << endl;
+      cout << hex << (int) as.get_output_data_30() << endl;
+      cout << hex << (int) as.get_output_data_31() << endl;
+      cout << hex << (int) as.get_output_data_32() << endl;
+      cout << hex << (int) as.get_output_data_33() << endl;
+      cout << hex << (int) as.get_output_data_34() << endl;
+      cout << hex << (int) as.get_output_data_35() << endl;
+      cout << hex << (int) as.get_output_data_36() << endl;
+      cout << hex << (int) as.get_output_data_37() << endl;
+      cout << hex << (int) as.get_output_data_38() << endl;
+      cout << hex << (int) as.get_output_data_39() << endl;
+      cout << hex << (int) as.get_output_data_40() << endl;
+      cout << hex << (int) as.get_output_data_41() << endl;
+      cout << hex << (int) as.get_output_data_42() << endl << endl;
     }
 
 }
