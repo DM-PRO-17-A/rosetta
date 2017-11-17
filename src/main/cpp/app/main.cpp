@@ -5,8 +5,13 @@
 #include <bitset>
 using namespace std;
 
+//#include "TestRegOps.hpp"
 #include "AutoSimple.hpp"
 #include "platform.h"
+
+string to_bits(int number) {
+  return bitset<10>(number).to_string();
+}
 
 bool Run_AutoSimple(WrapperRegDriver* platform) {
     AutoSimple as(platform);
@@ -87,57 +92,59 @@ bool Run_AutoSimple(WrapperRegDriver* platform) {
     for (int n = 0; n < n_images; n++) {
       as.set_output_pulse(1);
       as.set_output_pulse(0);
-      cout << bitset<10>(as.get_output_data_0()).to_string() << " == " << bitset<10>(results[n][0]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_1()).to_string() << " == " << bitset<10>(results[n][1]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_2()).to_string() << " == " << bitset<10>(results[n][2]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_3()).to_string() << " == " << bitset<10>(results[n][3]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_4()).to_string() << " == " << bitset<10>(results[n][4]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_5()).to_string() << " == " << bitset<10>(results[n][5]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_6()).to_string() << " == " << bitset<10>(results[n][6]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_7()).to_string() << " == " << bitset<10>(results[n][7]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_8()).to_string() << " == " << bitset<10>(results[n][8]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_9()).to_string() << " == " << bitset<10>(results[n][9]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_10()).to_string() << " == " << bitset<10>(results[n][10]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_11()).to_string() << " == " << bitset<10>(results[n][11]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_12()).to_string() << " == " << bitset<10>(results[n][12]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_13()).to_string() << " == " << bitset<10>(results[n][13]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_14()).to_string() << " == " << bitset<10>(results[n][14]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_15()).to_string() << " == " << bitset<10>(results[n][15]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_16()).to_string() << " == " << bitset<10>(results[n][16]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_17()).to_string() << " == " << bitset<10>(results[n][17]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_18()).to_string() << " == " << bitset<10>(results[n][18]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_19()).to_string() << " == " << bitset<10>(results[n][19]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_20()).to_string() << " == " << bitset<10>(results[n][20]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_21()).to_string() << " == " << bitset<10>(results[n][21]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_22()).to_string() << " == " << bitset<10>(results[n][22]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_23()).to_string() << " == " << bitset<10>(results[n][23]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_24()).to_string() << " == " << bitset<10>(results[n][24]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_25()).to_string() << " == " << bitset<10>(results[n][25]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_26()).to_string() << " == " << bitset<10>(results[n][26]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_27()).to_string() << " == " << bitset<10>(results[n][27]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_28()).to_string() << " == " << bitset<10>(results[n][28]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_29()).to_string() << " == " << bitset<10>(results[n][29]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_30()).to_string() << " == " << bitset<10>(results[n][30]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_31()).to_string() << " == " << bitset<10>(results[n][31]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_32()).to_string() << " == " << bitset<10>(results[n][32]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_33()).to_string() << " == " << bitset<10>(results[n][33]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_34()).to_string() << " == " << bitset<10>(results[n][34]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_35()).to_string() << " == " << bitset<10>(results[n][35]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_36()).to_string() << " == " << bitset<10>(results[n][36]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_37()).to_string() << " == " << bitset<10>(results[n][37]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_38()).to_string() << " == " << bitset<10>(results[n][38]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_39()).to_string() << " == " << bitset<10>(results[n][39]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_40()).to_string() << " == " << bitset<10>(results[n][40]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_41()).to_string() << " == " << bitset<10>(results[n][41]).to_string() << endl;
-      cout << bitset<10>(as.get_output_data_42()).to_string() << " == " << bitset<10>(results[n][42]).to_string() << endl << endl;
+      cout << to_bits(as.get_output_data_0()) << " == " << to_bits(results[n][0]) << " " << boolalpha << (to_bits(as.get_output_data_0()) == to_bits(results[n][0])) << endl;
+      cout << to_bits(as.get_output_data_1()) << " == " << to_bits(results[n][1]) << " " << boolalpha << (to_bits(as.get_output_data_1()) == to_bits(results[n][1])) << endl;
+      cout << to_bits(as.get_output_data_2()) << " == " << to_bits(results[n][2]) << " " << boolalpha << (to_bits(as.get_output_data_2()) == to_bits(results[n][2])) << endl;
+      cout << to_bits(as.get_output_data_3()) << " == " << to_bits(results[n][3]) << " " << boolalpha << (to_bits(as.get_output_data_3()) == to_bits(results[n][3])) << endl;
+      cout << to_bits(as.get_output_data_4()) << " == " << to_bits(results[n][4]) << " " << boolalpha << (to_bits(as.get_output_data_4()) == to_bits(results[n][4])) << endl;
+      cout << to_bits(as.get_output_data_5()) << " == " << to_bits(results[n][5]) << " " << boolalpha << (to_bits(as.get_output_data_5()) == to_bits(results[n][5])) << endl;
+      cout << to_bits(as.get_output_data_6()) << " == " << to_bits(results[n][6]) << " " << boolalpha << (to_bits(as.get_output_data_6()) == to_bits(results[n][6])) << endl;
+      cout << to_bits(as.get_output_data_7()) << " == " << to_bits(results[n][7]) << " " << boolalpha << (to_bits(as.get_output_data_7()) == to_bits(results[n][7])) << endl;
+      cout << to_bits(as.get_output_data_8()) << " == " << to_bits(results[n][8]) << " " << boolalpha << (to_bits(as.get_output_data_8()) == to_bits(results[n][8])) << endl;
+      cout << to_bits(as.get_output_data_9()) << " == " << to_bits(results[n][9]) << " " << boolalpha << (to_bits(as.get_output_data_9()) == to_bits(results[n][9])) << endl;
+      cout << to_bits(as.get_output_data_10()) << " == " << to_bits(results[n][10]) << " " << boolalpha << (to_bits(as.get_output_data_10()) == to_bits(results[n][10])) << endl;
+      cout << to_bits(as.get_output_data_11()) << " == " << to_bits(results[n][11]) << " " << boolalpha << (to_bits(as.get_output_data_11()) == to_bits(results[n][11])) << endl;
+      cout << to_bits(as.get_output_data_12()) << " == " << to_bits(results[n][12]) << " " << boolalpha << (to_bits(as.get_output_data_12()) == to_bits(results[n][12])) << endl;
+      cout << to_bits(as.get_output_data_13()) << " == " << to_bits(results[n][13]) << " " << boolalpha << (to_bits(as.get_output_data_13()) == to_bits(results[n][13])) << endl;
+      cout << to_bits(as.get_output_data_14()) << " == " << to_bits(results[n][14]) << " " << boolalpha << (to_bits(as.get_output_data_14()) == to_bits(results[n][14])) << endl;
+      cout << to_bits(as.get_output_data_15()) << " == " << to_bits(results[n][15]) << " " << boolalpha << (to_bits(as.get_output_data_15()) == to_bits(results[n][15])) << endl;
+      cout << to_bits(as.get_output_data_16()) << " == " << to_bits(results[n][16]) << " " << boolalpha << (to_bits(as.get_output_data_16()) == to_bits(results[n][16])) << endl;
+      cout << to_bits(as.get_output_data_17()) << " == " << to_bits(results[n][17]) << " " << boolalpha << (to_bits(as.get_output_data_17()) == to_bits(results[n][17])) << endl;
+      cout << to_bits(as.get_output_data_18()) << " == " << to_bits(results[n][18]) << " " << boolalpha << (to_bits(as.get_output_data_18()) == to_bits(results[n][18])) << endl;
+      cout << to_bits(as.get_output_data_19()) << " == " << to_bits(results[n][19]) << " " << boolalpha << (to_bits(as.get_output_data_19()) == to_bits(results[n][19])) << endl;
+      cout << to_bits(as.get_output_data_20()) << " == " << to_bits(results[n][20]) << " " << boolalpha << (to_bits(as.get_output_data_20()) == to_bits(results[n][20])) << endl;
+      cout << to_bits(as.get_output_data_21()) << " == " << to_bits(results[n][21]) << " " << boolalpha << (to_bits(as.get_output_data_21()) == to_bits(results[n][21])) << endl;
+      cout << to_bits(as.get_output_data_22()) << " == " << to_bits(results[n][22]) << " " << boolalpha << (to_bits(as.get_output_data_22()) == to_bits(results[n][22])) << endl;
+      cout << to_bits(as.get_output_data_23()) << " == " << to_bits(results[n][23]) << " " << boolalpha << (to_bits(as.get_output_data_23()) == to_bits(results[n][23])) << endl;
+      cout << to_bits(as.get_output_data_24()) << " == " << to_bits(results[n][24]) << " " << boolalpha << (to_bits(as.get_output_data_24()) == to_bits(results[n][24])) << endl;
+      cout << to_bits(as.get_output_data_25()) << " == " << to_bits(results[n][25]) << " " << boolalpha << (to_bits(as.get_output_data_25()) == to_bits(results[n][25])) << endl;
+      cout << to_bits(as.get_output_data_26()) << " == " << to_bits(results[n][26]) << " " << boolalpha << (to_bits(as.get_output_data_26()) == to_bits(results[n][26])) << endl;
+      cout << to_bits(as.get_output_data_27()) << " == " << to_bits(results[n][27]) << " " << boolalpha << (to_bits(as.get_output_data_27()) == to_bits(results[n][27])) << endl;
+      cout << to_bits(as.get_output_data_28()) << " == " << to_bits(results[n][28]) << " " << boolalpha << (to_bits(as.get_output_data_28()) == to_bits(results[n][28])) << endl;
+      cout << to_bits(as.get_output_data_29()) << " == " << to_bits(results[n][29]) << " " << boolalpha << (to_bits(as.get_output_data_29()) == to_bits(results[n][29])) << endl;
+      cout << to_bits(as.get_output_data_30()) << " == " << to_bits(results[n][30]) << " " << boolalpha << (to_bits(as.get_output_data_30()) == to_bits(results[n][30])) << endl;
+      cout << to_bits(as.get_output_data_31()) << " == " << to_bits(results[n][31]) << " " << boolalpha << (to_bits(as.get_output_data_31()) == to_bits(results[n][31])) << endl;
+      cout << to_bits(as.get_output_data_32()) << " == " << to_bits(results[n][32]) << " " << boolalpha << (to_bits(as.get_output_data_32()) == to_bits(results[n][32])) << endl;
+      cout << to_bits(as.get_output_data_33()) << " == " << to_bits(results[n][33]) << " " << boolalpha << (to_bits(as.get_output_data_33()) == to_bits(results[n][33])) << endl;
+      cout << to_bits(as.get_output_data_34()) << " == " << to_bits(results[n][34]) << " " << boolalpha << (to_bits(as.get_output_data_34()) == to_bits(results[n][34])) << endl;
+      cout << to_bits(as.get_output_data_35()) << " == " << to_bits(results[n][35]) << " " << boolalpha << (to_bits(as.get_output_data_35()) == to_bits(results[n][35])) << endl;
+      cout << to_bits(as.get_output_data_36()) << " == " << to_bits(results[n][36]) << " " << boolalpha << (to_bits(as.get_output_data_36()) == to_bits(results[n][36])) << endl;
+      cout << to_bits(as.get_output_data_37()) << " == " << to_bits(results[n][37]) << " " << boolalpha << (to_bits(as.get_output_data_37()) == to_bits(results[n][37])) << endl;
+      cout << to_bits(as.get_output_data_38()) << " == " << to_bits(results[n][38]) << " " << boolalpha << (to_bits(as.get_output_data_38()) == to_bits(results[n][38])) << endl;
+      cout << to_bits(as.get_output_data_39()) << " == " << to_bits(results[n][39]) << " " << boolalpha << (to_bits(as.get_output_data_39()) == to_bits(results[n][39])) << endl;
+      cout << to_bits(as.get_output_data_40()) << " == " << to_bits(results[n][40]) << " " << boolalpha << (to_bits(as.get_output_data_40()) == to_bits(results[n][40])) << endl;
+      cout << to_bits(as.get_output_data_41()) << " == " << to_bits(results[n][41]) << " " << boolalpha << (to_bits(as.get_output_data_41()) == to_bits(results[n][41])) << endl;
+      cout << to_bits(as.get_output_data_42()) << " == " << to_bits(results[n][42]) << " " << boolalpha << (to_bits(as.get_output_data_42()) == to_bits(results[n][42])) << endl << endl;
     }
 
 }
+
 
 int main()
 {
   WrapperRegDriver * platform = initPlatform();
 
+  //Run_TestRegOps(platform);
   Run_AutoSimple(platform);
 
   deinitPlatform(platform);
