@@ -48,6 +48,11 @@ class RosettaAcceleratorIF(numMemPorts: Int) extends Bundle {
   // user RGB LEDs
   val led4 = Vec(3, UInt(OUTPUT, 1))
   val led5 = Vec(3, UInt(OUTPUT, 1))
+  // Pins
+  val ck_out = UInt(OUTPUT, 4)
+  val ck_in = UInt(INPUT, 2)
+  // pcb buttons
+  val pbtn = UInt(INPUT, 1)
 }
 
 // base class for Rosetta accelerators
@@ -120,6 +125,11 @@ class RosettaWrapper(instFxn: () => RosettaAccelerator) extends Module {
     val led5_r = UInt(OUTPUT, 1)
     val led5_g = UInt(OUTPUT, 1)
     val led5_b = UInt(OUTPUT, 1)
+    // pins
+    val ck_out = UInt(OUTPUT, 4)
+    val ck_in = UInt(INPUT, 2)
+    // pcb btns
+    val pbtn = UInt(INPUT, 1)
   }
   setName("PYNQWrapper")
   setModuleName("PYNQWrapper")
@@ -245,6 +255,9 @@ class RosettaWrapper(instFxn: () => RosettaAccelerator) extends Module {
   io.led5_b := accel.io.led5(0)
   io.led5_g := accel.io.led5(1)
   io.led5_r := accel.io.led5(2)
+  io.ck_out := accel.io.ck_out
+  accel.io.ck_in := io.ck_in
+  accel.io.pbtn := io.pbtn
 
   // memory port adapters and connections
   for(i <- 0 until accel.numMemPorts) {
