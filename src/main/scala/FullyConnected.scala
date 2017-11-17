@@ -8,8 +8,7 @@ class FullyConnected(kernels_path: String, kernels_length: Int, weights_length: 
     // Map the kernels / weights to UInt
     val kernels = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream(kernels_path)).getLines.toArray.slice(0, kernels_length)
         .map(kernel =>
-          kernel.split(" ").toArray.slice(0, weights_length).grouped(input_per_it).map(group => UInt(BigInt(group.mkString, 2), width=input_per_it)).toArray
-          //kernel.split(" ").map(i => UInt(i.toInt, width=1)).toArray.slice(0, weights_length)
+          Vec(kernel.split(" ").toArray.slice(0, weights_length).grouped(input_per_it).map(group => UInt(BigInt(group.mkString, 2), width=input_per_it)).toArray)
         )
 
     val output_width = math.ceil(math.log(weights_length * math.pow(2, input_width)) / math.log(2)).toInt + 1
@@ -24,103 +23,77 @@ class FullyConnected(kernels_path: String, kernels_length: Int, weights_length: 
     val done :: waiting :: calc :: Nil = Enum(UInt(), 3) // Sexy
     val state = Reg(init = waiting)
 
-    val current_weight = Reg(init=UInt(0, width=log2Up(weights_length) + 1))
-    val current_kernel = Reg(init=UInt(0, width=log2Up(kernels_length) + 1))
+    val weight_steps = weights_length / input_per_it
+    val weight_step = Reg(init=UInt(0, width=log2Up(weight_steps)))
 
+    val kernel_steps = kernels_length / kernels_per_it
+    val kernel_step = Reg(init=UInt(0, width=log2Up(kernel_steps + 1)))
 
-    if (kernels_length == kernels_per_it && weights_length == input_per_it) {
-        val dot_prods = Array.fill(kernels_per_it){Module(new DotProduct(input_per_it, input_width)).io}
+    val acc = Array.fill(kernels_length){Reg(init=SInt(0, width=output_width))}
 
-        for (k <- 0 until kernels_per_it) {
-            dot_prods(k).vec_1 := io.input.bits
-            dot_prods(k).vec_2 := kernels(k)(0)
-            io.output.bits(k) := dot_prods(k).output_data
-        }
+    val dot_prods = Array.fill(kernels_per_it){Module(new DotProduct(input_per_it, input_width)).io}
+    for (k <- 0 until kernels_per_it) {
+        dot_prods(k).vec_1 := io.input.bits
+        dot_prods(k).vec_2 := UInt(0, width=input_per_it)
+    }
 
-        io.output.valid := io.input.valid
-        io.input.ready := io.output.ready
+    for (k <- 0 until kernels_length) {
+          io.output.bits(k) := acc(k)
+    }
 
-    } else {
-        val acc = Array.fill(kernels_length){Reg(init=SInt(0, width=output_width))}
+    // Default values
+    io.output.valid := Bool(false)
+    io.input.ready := Bool(true)
 
-        val dot_prods = Array.fill(kernels_per_it){Module(new DotProduct(input_per_it, input_width)).io}
-        for (k <- 0 until kernels_per_it) {
-            dot_prods(k).vec_1 := io.input.bits
-            dot_prods(k).vec_2 := UInt(0, width=input_per_it)
-        }
-
-        for (i <- 0 until kernels_length) {
-              io.output.bits(i) := acc(i)
-        }
-
-        // Default values
-        io.output.valid := Bool(false)
-        io.input.ready := Bool(true)
-
-        val weight_step = current_weight / UInt(input_per_it) * UInt(kernels_length) + current_kernel
-        switch (weight_step) {
-          for (w <- 0 until weights_length by input_per_it) {
-            for (k <- 0 until kernels_length by kernels_per_it) {
-              is (UInt(w / input_per_it * kernels_length + k, width=log2Up(weights_length / input_per_it * kernels_length + kernels_length))) {
-                for (k_i <- 0 until kernels_per_it) {
-                  dot_prods(k_i).vec_2 := kernels(k + k_i)(w / input_per_it)
-                }
-              }
-            }
+    switch(state) {
+      is (done) {
+        io.output.valid := Bool(true)
+        io.input.ready := Bool(false)
+        when (io.output.ready) {
+          // Reset everything and change state!
+          for (k <- 0 until kernels_length) {
+            acc(k) := UInt(0)
           }
+          weight_step := UInt(0)
+          kernel_step := UInt(0)
+          state := waiting
         }
-
-
-        switch(state) {
-            is (done) {
-              io.output.valid := Bool(true)
-              io.input.ready := Bool(false)
-              when (io.output.ready) {
-                // Reset everything and change state!
-                for (k <- 0 until kernels_length) {
-                  acc(k) := UInt(0)
-                }
-                current_weight := UInt(0)
-                current_kernel := UInt(0)
-                state := waiting
-              }
+      }
+      is (waiting) {
+        io.input.ready := Bool(true)
+        when (io.input.valid) {
+          io.input.ready := Bool(false)
+          state := calc
+          kernel_step := UInt(0)
+        }
+      }
+      is (calc) {
+        when (kernel_step === UInt(kernel_steps)) {
+          when (weight_step === UInt(weight_steps - 1)) {
+              state := done
+            } .otherwise {
+              state := waiting
             }
-            is (waiting) {
-              io.input.ready := Bool(true)
-              when (io.input.valid) {
-                io.input.ready := Bool(false)
-                state := calc
-                current_kernel := UInt(0)
-              }
-            }
-            is (calc) {
-                when (current_kernel === UInt(kernels_length)) {
-                  when (current_weight === UInt(weights_length - input_per_it)) {
-                    state := done
-                  } .otherwise {
-                    state := waiting
-                  }
 
-                  current_weight := current_weight + UInt(input_per_it)
+            weight_step := weight_step + UInt(1)
 
-                } .otherwise {
-                  switch (weight_step % UInt(kernels_length)) {
-                    for (k <- 0 until kernels_length by kernels_per_it) {
-                      is (UInt(k, width=log2Up(kernels_length))) {
-                        for (k_i <- 0 until kernels_per_it) {
-                          acc(k + k_i) := acc(k + k_i) + dot_prods(k_i).output_data
-                        }
-                      }
+            } .otherwise {
+              switch (kernel_step) {
+                for (k <- 0 until kernel_steps) {
+                  is (UInt(k)) {
+                    for (k_i <- 0 until kernels_per_it) {
+                      dot_prods(k_i).vec_2 := kernels(k * kernels_per_it + k_i)(weight_step)
+                      acc(k * kernels_per_it + k_i) := acc(k * kernels_per_it + k_i) + dot_prods(k_i).output_data
                     }
                   }
-
-                  current_kernel := current_kernel + UInt(kernels_per_it)
-                  io.input.ready := Bool(false)
-                  io.output.valid := Bool(false)
+                }
               }
-            }
-        }
 
+              kernel_step := kernel_step + UInt(1)
+              io.input.ready := Bool(false)
+              io.output.valid := Bool(false)
+            }
+      }
     }
 
 
@@ -131,9 +104,9 @@ class FullyConnectedTests(c: FullyConnected) extends Tester(c) {
     val kernels = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/test_data/fc1.txt")).getLines.toArray.map(kernel => kernel.split(" ").map(s => s.toInt * 2 -1))
 
     val input_size = 64
+    val weights_length = 1024
     val kernels_per_iteration = 32
     val kernels_length = 64
-    val weights_length = 1024
 
     for (image <- 0 until 2) {
         poke(c.io.output.ready, 1) // The next component is ready
@@ -149,8 +122,8 @@ class FullyConnectedTests(c: FullyConnected) extends Tester(c) {
             while (peek(c.io.input.ready) == 0) {
               step(1)
               peek(c.state)
-              peek(c.current_kernel)
-              peek(c.current_weight)
+              peek(c.kernel_step)
+              peek(c.weight_step)
             }
 
             poke(c.io.input.valid, 0)
@@ -168,7 +141,7 @@ class FullyConnectedTests(c: FullyConnected) extends Tester(c) {
         // Output data should now be valid!
         peek(c.done)
         peek(c.state)
-        peek(c.current_kernel)
-        peek(c.current_weight)
+        peek(c.kernel_step)
+        peek(c.weight_step)
     }
 }

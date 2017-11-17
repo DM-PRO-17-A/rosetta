@@ -3,14 +3,6 @@ package rosetta
 import Chisel._
 
 class DotProduct(input_size: Int, input_width: Int) extends RosettaAccelerator {
-    def XNOR(a: Bits, b: Bits): Bits = {
-        ~(a ^ b)
-    }
-
-    def expandInt(a: UInt): SInt = {
-        SInt(2, width=3) * a.zext - UInt(1)
-    }
-
     val output_width = math.ceil(math.log(input_size * math.pow(2, input_width)) / math.log(2)).toInt + 1
 
     val numMemPorts = 0
@@ -22,10 +14,11 @@ class DotProduct(input_size: Int, input_width: Int) extends RosettaAccelerator {
         val output_data = SInt(OUTPUT, output_width)
     }
 
+
     if(input_width == 1) {
-      io.output_data := (io.vec_1.zipWithIndex.map{ case(i1, index) => (i1, io.vec_2(input_size - 1 - index))}).map{case (i1: Bits, i2: Bits) => Mux(i1 === i2, SInt(1, width=2), SInt(-1, width=2))}.fold(SInt(0, width=output_width))(_ + _)
+      io.output_data := io.vec_1.zipWithIndex.map{ case(i1: Bits, index: Int) => Mux(i1 === io.vec_2(input_size - 1 - index), SInt(1, width=2), SInt(-1, width=2))}.fold(SInt(0, width=output_width))(_ + _)
     } else {
-      io.output_data := (io.vec_1.zipWithIndex.map{ case(i1, index) => (i1, io.vec_2(input_size - 1 - index))}).map{case (i1: UInt, i2: Bits) => Mux(i2 === Bits(0), -i1.zext, i1.zext)}.fold(SInt(0, width=output_width))(_ + _)
+      io.output_data := io.vec_1.zipWithIndex.map{ case(i1: UInt, index: Int) => Mux(io.vec_2(input_size - 1 - index) === Bits(0), -i1.zext, i1.zext)}.fold(SInt(0, width=output_width))(_ + _)
     }
 }
 

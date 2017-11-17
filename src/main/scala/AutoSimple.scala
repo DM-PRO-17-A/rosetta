@@ -7,15 +7,15 @@ class AutoSimple(kernels_path1: String, kernels_path2: String) extends RosettaAc
 
   val input_width = 8
 
-  val kernels_per_it = 8
+  val kernels_per_it = 4
   val kernels_length = 256
 
-  val input_per_it = 32
+  val input_per_it = 128
   val weights_length = 3072
 
   val io = new RosettaAcceleratorIF(numMemPorts) {
     // values to be compared
-    val input_data = Vec.fill(32){Bits(INPUT, 8)}
+    val input_data = Vec.fill(input_per_it){Bits(INPUT, 8)}
     val input_pulse = Bool(INPUT)
     val output_pulse = Bool(INPUT)
 
@@ -32,10 +32,10 @@ class AutoSimple(kernels_path1: String, kernels_path2: String) extends RosettaAc
   val FC1 = Module(new FullyConnected(kernels_path1, kernels_length, weights_length, kernels_per_it, input_per_it, input_width))
   FC1.io.input <> IQ.io.output
 
-  val BT = Module(new ComparatorWrapper(FC1.output_width, 256))
+  val BT = Module(new ComparatorWrapper(FC1.output_width, kernels_length))
   BT.io.input <> FC1.io.output
 
-  val FC2 = Module(new FullyConnected(kernels_path2, 43, 256, 1, 256, 1))
+  val FC2 = Module(new FullyConnected(kernels_path2, 43, kernels_length, 1, kernels_length, 1))
   FC2.io.input <> BT.io.output
 
   val OQ = Module(new OutputQueue(FC2.output_width, 24, 43))
@@ -59,10 +59,10 @@ class AutoSimpleTest(c: AutoSimple) extends Tester(c) {
     val thresholds      = LoadResource("/test_data/thresholds.txt").map(t => t.split(", ").map(_.toInt)).toArray.head
     val expected_output = LoadResource("/test_data/fc2output60.txt").head.split(" ").map(s => BigInt(s.toInt))
 
-    val images                = 1
-    val kernels_per_iteration = 8
+    val images                = 4
+    val kernels_per_iteration = 4
     val kernels_length        = 256
-    val input_size            = 32
+    val input_size            = 128
     val weights_length        = 3072
 
     def FC1_Result(n: Int) : Array[BigInt] = {
