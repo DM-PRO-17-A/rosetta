@@ -70,33 +70,30 @@ class FullyConnected(kernels_path: String, kernels_length: Int, weights_length: 
       is (calc) {
         when (kernel_step === UInt(kernel_steps)) {
           when (weight_step === UInt(weight_steps - 1)) {
-              state := done
-            } .otherwise {
-              state := waiting
-            }
+            state := done
+          } .otherwise {
+            state := waiting
+          }
+          weight_step := weight_step + UInt(1)
 
-            weight_step := weight_step + UInt(1)
-
-            } .otherwise {
-              switch (kernel_step) {
-                for (k <- 0 until kernel_steps) {
-                  is (UInt(k)) {
-                    for (k_i <- 0 until kernels_per_it) {
-                      dot_prods(k_i).vec_2 := kernels(k * kernels_per_it + k_i)(weight_step)
-                      acc(k * kernels_per_it + k_i) := acc(k * kernels_per_it + k_i) + dot_prods(k_i).output_data
-                    }
-                  }
+        } .otherwise {
+          switch (kernel_step) {
+            for (k <- 0 until kernel_steps) {
+              is (UInt(k)) {
+                for (k_i <- 0 until kernels_per_it) {
+                  dot_prods(k_i).vec_2 := kernels(k * kernels_per_it + k_i)(weight_step)
+                  acc(k * kernels_per_it + k_i) := acc(k * kernels_per_it + k_i) + dot_prods(k_i).output_data
                 }
               }
-
-              kernel_step := kernel_step + UInt(1)
-              io.input.ready := Bool(false)
-              io.output.valid := Bool(false)
             }
+          }
+
+          kernel_step := kernel_step + UInt(1)
+          io.input.ready := Bool(false)
+          io.output.valid := Bool(false)
+        }
       }
-    }
-
-
+  }
 }
 
 class FullyConnectedTests(c: FullyConnected) extends Tester(c) {

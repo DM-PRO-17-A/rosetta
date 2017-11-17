@@ -10,7 +10,7 @@ class AutoSimple(kernels_path1: String, kernels_path2: String) extends RosettaAc
   val kernels_per_it = 4
   val kernels_length = 256
 
-  val input_per_it = 128
+  val input_per_it = 32
   val weights_length = 3072
 
   val io = new RosettaAcceleratorIF(numMemPorts) {
@@ -59,10 +59,10 @@ class AutoSimpleTest(c: AutoSimple) extends Tester(c) {
     val thresholds      = LoadResource("/test_data/thresholds.txt").map(t => t.split(", ").map(_.toInt)).toArray.head
     val expected_output = LoadResource("/test_data/fc2output60.txt").head.split(" ").map(s => BigInt(s.toInt))
 
-    val images                = 4
+    val images                = 1
     val kernels_per_iteration = 4
     val kernels_length        = 256
-    val input_size            = 128
+    val input_size            = 32
     val weights_length        = 3072
 
     def FC1_Result(n: Int) : Array[BigInt] = {

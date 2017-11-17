@@ -24,8 +24,7 @@ class ComparatorWrapper(dataWidth: Int, valuesPerIteration: Int) extends Rosetta
 
   // creates a new comparator for each element in array 
   for(j <- 0 until valuesPerIteration){
-      // io.output.bits(UInt(j)) := Mux(io.input.bits(UInt(j)) >= t(UInt(j)), UInt(1), UInt(0))
-      io.output.bits(j) := Mux(io.input.bits(j) >= t(j), UInt(1), UInt(0))
+      io.output.bits(j) := Mux(io.input.bits(j) >= t(j), UInt(1, width=1), UInt(0, width=1))
     }
 
 }

@@ -7,7 +7,7 @@ class DotProduct(input_size: Int, input_width: Int) extends RosettaAccelerator {
 
     val numMemPorts = 0
     val io = new RosettaAcceleratorIF(numMemPorts){
-        val vec_1 = Vec.fill(input_size){Bits(INPUT, input_width)}
+        val vec_1 = Vec.fill(input_size){UInt(INPUT, input_width)}
         val vec_2 = Bits(INPUT, input_size)
 
         // Calculate output_width based on input_size and input_width
@@ -18,7 +18,7 @@ class DotProduct(input_size: Int, input_width: Int) extends RosettaAccelerator {
     if(input_width == 1) {
       io.output_data := io.vec_1.zipWithIndex.map{ case(i1: Bits, index: Int) => Mux(i1 === io.vec_2(input_size - 1 - index), SInt(1, width=2), SInt(-1, width=2))}.fold(SInt(0, width=output_width))(_ + _)
     } else {
-      io.output_data := io.vec_1.zipWithIndex.map{ case(i1: UInt, index: Int) => Mux(io.vec_2(input_size - 1 - index) === Bits(0), -i1.zext, i1.zext)}.fold(SInt(0, width=output_width))(_ + _)
+      io.output_data := io.vec_1.map(_.zext).zipWithIndex.map{ case(i1: SInt, index: Int) => Mux(io.vec_2(input_size - 1 - index), i1, -i1)}.fold(SInt(0, width=output_width))(_ + _)
     }
 }
 
