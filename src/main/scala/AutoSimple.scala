@@ -20,7 +20,7 @@ class AutoSimple(kernels_path1: String, kernels_path2: String) extends RosettaAc
     val output_pulse = Bool(INPUT)
 
     // values to be output
-    val output_data = Vec.fill(43){Bits(OUTPUT)}
+    val output_data = Vec.fill(43){SInt(OUTPUT)}
     val empty = Bool(OUTPUT)
     val full = Bool(OUTPUT)
 
