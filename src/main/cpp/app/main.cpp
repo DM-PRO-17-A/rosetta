@@ -11,7 +11,7 @@ namespace std;
 
 
 const int VEC_SIZE = 43;
-const vector<string> gtsrb_classes(VEC_SIZE) = {"20 Km/h", "30 Km/h", "50 Km/h", "60 Km/h", "70 Km/h", "80 Km/h",
+static const string gtsrb_classes[VEC_SIZE] = {"20 Km/h", "30 Km/h", "50 Km/h", "60 Km/h", "70 Km/h", "80 Km/h",
                  "End 80 Km/h", "100 Km/h", "120 Km/h", "No overtaking",
                  "No overtaking for large trucks", "Priority crossroad", "Priority road",
                  "Give way", "Stop", "No vehicles",
@@ -28,7 +28,7 @@ const vector<string> gtsrb_classes(VEC_SIZE) = {"20 Km/h", "30 Km/h", "50 Km/h",
 				 "End of no-overtaking zone for vehicles with a permitted gross weight over 3.5t including their trailers, and for tractors except passenger cars and buses"};
 
 
-vector<int> speed(2) = {0, 0};
+vector<int> speed = {0, 0};
 
 vector<int> get_signal( std::string sign )
 {
@@ -91,12 +91,13 @@ int main()
 	WrapperRegDriver * platform = initPlatform();
 
 
-	// Wait until start button is pressed
-	while ( 1 == get_pcb_btn() );
-
+	// Wait until start button on PCB is pressed
+	while ( 1 == get_pcb_btns()[0] );
+	go( 1 );
+	
 
 	// Initialise array for output data
-	vector<float> average(VEC_SIZE);
+	vector<float> average( VEC_SIZE );
 	int i;
 	for ( i = 0; i < VEC_SIZE; ++i )
 		average[i] = 0.0;
@@ -107,8 +108,7 @@ int main()
 		/* Read input from daughter card 
 		 * If busy, don't process and send new data
 		 */
-		vector<int> input;
-		input = get_input_pins( platform );
+		vector<int> input = get_input_pins( platform );
 		if ( 1 == input[1] )
 			continue;
 
@@ -126,18 +126,28 @@ int main()
 			// TODO: Insert logic for calculating most likely sign
 			average[i] += output[i];
 		}
-
+		// Maybe call softmax?
+		
+		
 		// Get most likely sign and send instructions to daughter card
 		int max_index = *max_element( average.begin(), average.end() );
 		std::string sign = gtsrb_classes[max_index];
 		vector<int> signal = get_signal( sign );
-		if ( 0 == input[0] )
+		// If the robot is at a crossroads, tell it what to do
+		if ( 1 == input[0] )
 			set_output_pins( platform, signal );
-
+		else
+		{
+			signal = { speed[0], speed[0], 0, 0 };
+			set_output_pins( platform, signal );
+		}
+			
+		
 		// Stop the program in its entirety
 		if ( "Stop" == sign )
 		{
 			cout << "This is the end." << endl;
+			go( 0 );
 			break;
 		}
 	}
