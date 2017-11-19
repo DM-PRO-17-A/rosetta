@@ -7,7 +7,7 @@
 #include "platform.h"
 #include "fpga_interfacing.hpp"
 
-namespace std;
+using namespace std;
 
 
 const int VEC_SIZE = 43;
@@ -98,17 +98,24 @@ int main()
 
 	// Initialise array for output data
 	vector<float> average( VEC_SIZE );
+	vector<float> weights( VEC_SIZE );
 	int i;
 	for ( i = 0; i < VEC_SIZE; ++i )
+	{
 		average[i] = 0.0;
-	
+		if ( 2 == i || 4 == i || 7 == i || 14 == i || 17 == i || 33 == i || 34 == i )
+			weights[i] = 1.0;
+		else
+			weights[i] = 0.5
+	}
 
 	while(1)
 	{
 		/* Read input from daughter card 
 		 * If busy, don't process and send new data
 		 */
-		vector<int> input = get_input_pins( platform );
+		vector<int> input;
+		input = get_input_pins( platform );
 		if ( 1 == input[1] )
 			continue;
 
@@ -124,15 +131,17 @@ int main()
 		for ( i = 0; i < VEC_SIZE; ++i )
 		{
 			// TODO: Insert logic for calculating most likely sign
-			average[i] += output[i];
+			average[i] += ( output[i] * weights[i] );
 		}
-		// Maybe call softmax?
+		// Standardise result
+		average = softmax( average );
 		
 		
 		// Get most likely sign and send instructions to daughter card
 		int max_index = *max_element( average.begin(), average.end() );
 		std::string sign = gtsrb_classes[max_index];
-		vector<int> signal = get_signal( sign );
+		vector<int> signal;
+		signal = get_signal( sign );
 		// If the robot is at a crossroads, tell it what to do
 		if ( 1 == input[0] )
 			set_output_pins( platform, signal );
