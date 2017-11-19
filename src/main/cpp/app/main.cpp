@@ -1,45 +1,17 @@
 #include <iostream>
-#include <fstream>
-#include <unistd.h>
-#include <sstream>
-#include <bitset>
 #include <string>
-using namespace std;
-
-//#include "TestRegOps.hpp"
+#include <algorithm>
+#include <vector>
+// Rosetta stuff in order to use the FPGA and pins
 #include "AutoSimple.hpp"
 #include "platform.h"
 #include "fpga_interfacing.hpp"
 
-int main()
-{
-  WrapperRegDriver * platform = initPlatform();
+namespace std;
 
-  ifstream input("./auto_simple_input.txt");
-  int n_images = 4;
-  vector<int> images(3072); 
-  int index = 0;
-  int i;
 
-  string line;
-  int n = 0;
-  while (getline(input, line) && n == 0) {
-    index = 0;
-    istringstream is(line);
-    while (is >> i) {
-      images[index] = i;
-      //cout << "images[" << index << "]: " << i << endl;
-      index++;
-    }
-    n++;
-  }
-
-  set_qnn_input(platform, images);
-
-  vector<float> result;
-  result = get_qnn_output(platform);
-
-  string gtsrb_classes[43] = {"20 Km/h", "30 Km/h", "50 Km/h", "60 Km/h", "70 Km/h", "80 Km/h",
+const int VEC_SIZE = 43;
+const vector<string> gtsrb_classes(VEC_SIZE) = {"20 Km/h", "30 Km/h", "50 Km/h", "60 Km/h", "70 Km/h", "80 Km/h",
                  "End 80 Km/h", "100 Km/h", "120 Km/h", "No overtaking",
                  "No overtaking for large trucks", "Priority crossroad", "Priority road",
                  "Give way", "Stop", "No vehicles",
@@ -53,25 +25,126 @@ int main()
                  "Turn left ahead", "Ahead only", "Ahead or right only",
                  "Ahead or left only", "Pass by on right", "Pass by on left", "Roundabout",
                  "End of no-overtaking zone",
-                 "End of no-overtaking zone for vehicles with a permitted gross weight over 3.5t including their trailers, and for tractors except passenger cars and buses"};
-
-  float max = 0;
-  int max_i;
-  for(i = 0; i < 43; i++){
-    if(result[i] > max){
-      max = result[i];
-      max_i = i;
-    }
-    //cout << gtsrb_classes[i] << ": " <<  result[i] << endl;
-  }
-
-  cout << gtsrb_classes[max_i] << endl;
+				 "End of no-overtaking zone for vehicles with a permitted gross weight over 3.5t including their trailers, and for tractors except passenger cars and buses"};
 
 
-  //Run_TestRegOps(platform);
-  //Run_AutoSimple(platform);
+vector<int> speed(2) = {0, 0};
 
-  deinitPlatform(platform);
+vector<int> get_signal( std::string sign )
+{
+	vector<int> signal(4);
+	if ( "50 Km/h" == sign )
+	{
+		signal = {0, 1, 0, 0};
+		speed = {0, 1};
+	}
+	else if ( "70 Km/h" == sign )
+	{
+		signal = {1, 0, 0, 0};
+		speed = {1, 0};
+	}
+	else if ( "100 Km/h" == sign )
+	{
+		signal = {1, 1, 0, 0};
+		speed = {1, 1};
+	}
+	else if ( "Turn right ahead" == sign )
+	{
+		signal[0] = speed[0];
+		signal[0] = speed[1];
+		signal[2] = 0;
+		signal[3] = 1;
+	}
+	else if ( "Turn left ahead" == sign )
+	{
+		signal[0] = speed[0];
+		signal[0] = speed[1];
+		signal[2] = 1;
+		signal[3] = 0;
+	}
+	else if ( "No entry for vehicular traffic" == sign )
+	{
+		signal[0] = speed[0];
+		signal[0] = speed[1];
+		signal[2] = 1;
+		signal[3] = 1;
+	}
+	else if ( "Stop" == sign )
+	{
+		signal = {0, 0, 0, 0};
+		speed = {0, 0};
+	}
+	else
+	{
+		signal[0] = speed[0];
+		signal[0] = speed[1];
+		signal[2] = 0;
+		signal[3] = 0;
+	}
+	return signal;
+}
 
-  return 0;
+
+int main()
+{
+	// Platform to use pins from
+	WrapperRegDriver * platform = initPlatform();
+
+
+	// Wait until start button is pressed
+	while ( 1 == get_pcb_btn() );
+
+
+	// Initialise array for output data
+	vector<float> average(VEC_SIZE);
+	int i;
+	for ( i = 0; i < VEC_SIZE; ++i )
+		average[i] = 0.0;
+	
+
+	while(1)
+	{
+		/* Read input from daughter card 
+		 * If busy, don't process and send new data
+		 */
+		vector<int> input;
+		input = get_input_pins( platform );
+		if ( 1 == input[1] )
+			continue;
+
+
+		// POSSIBLY call image taking method and send to QNN
+
+		
+		// Get QNN output and find most likely sign
+		vector<float> output;
+		output = get_qnn_output( platform );
+		
+		int i;
+		for ( i = 0; i < VEC_SIZE; ++i )
+		{
+			// TODO: Insert logic for calculating most likely sign
+			average[i] += output[i];
+		}
+
+		// Get most likely sign and send instructions to daughter card
+		int max_index = *max_element( average.begin(), average.end() );
+		std::string sign = gtsrb_classes[max_index];
+		vector<int> signal = get_signal( sign );
+		if ( 0 == input[0] )
+			set_output_pins( platform, signal );
+
+		// Stop the program in its entirety
+		if ( "Stop" == sign )
+		{
+			cout << "This is the end." << endl;
+			break;
+		}
+	}
+	
+
+	deinitPlatform(platform);
+	
+	
+	return 0;
 }
