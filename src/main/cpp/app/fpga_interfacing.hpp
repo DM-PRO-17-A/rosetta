@@ -15,7 +15,7 @@ vector<int> get_pcb_btns(WrapperRegDriver* platform);
 vector<float> get_qnn_output(WrapperRegDriver* platform);
 
 // QNN layers
-vector<float> scaleshift(int pointer);
-vector<float> softmax(float inn);
+vector<float> scaleshift(vector<int> pointer);
+vector<float> softmax(vector<float> inn);
 
 #endif

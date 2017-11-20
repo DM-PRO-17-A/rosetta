@@ -13,6 +13,9 @@
 #include "math.h"
 
 using namespace std;
+using namespace cv;
+
+int Distance(Vec3b color1, Vec3b color2);
 
 
 const int VEC_SIZE = 43;
@@ -125,12 +128,12 @@ Mat Preprocessing(Mat image, Vec3b red, Vec3b blue, int radii[2], int limit)
 }
 
 
-void crop_and_send( WrapperRegDriver* platform, Mat frame )
+int crop_and_send( WrapperRegDriver* platform, Mat frame )
 {
 	Mat cropped;
     cropped = Preprocessing(frame, red, blue, radii, limit);
     if (cropped.empty())
-		continue;
+      return -1;
     if (cropped.rows < 5) {
 		cropped.release();
 		Mat crop(32, 32, CV_8UC3, Scalar(0,0,0));
@@ -155,9 +158,8 @@ void crop_and_send( WrapperRegDriver* platform, Mat frame )
 			}
 		}
 
-		// If the input queue is full, don't try to put in more
-		if ( !get_full() )
-			set_qnn_input(platform, V);
+    set_qnn_input(platform, V);
+    return 0;
 	}
 }
 // Camera majics end
@@ -247,8 +249,8 @@ int main()
 
 
 	// Wait until start button on PCB is pressed
-	while ( 1 == get_pcb_btns()[0] );
-	go( 1 );
+	while ( 1 == get_pcb_btns(platform)[0] );
+	go( platform, 1 );
 	
 
 	// Initialise array for output data and weights
@@ -262,7 +264,7 @@ int main()
 		if ( 2 == i || 4 == i || 7 == i || 14 == i || 17 == i || 33 == i || 34 == i )
 			weights[i] = 1.0;
 		else
-			weights[i] = 0.5
+			weights[i] = 0.5;
 	}
 
 
@@ -284,16 +286,16 @@ int main()
 		if ( frame.empty() )
 			continue;
 
-		crop_and_send ( platform, frame );
+		if(crop_and_send ( platform, frame ) == -1)
+      continue;
 		
 
-		// If there aren't any output data to read, don't try
-		if ( get_empty() )
-			continue;
 		
 		// Get QNN output and find most likely sign
 		vector<float> output;
 		output = get_qnn_output( platform );
+    if(output.empty())
+      continue;
 
 		if ( 3 <= count++ )
 		{
@@ -315,8 +317,8 @@ int main()
 		float max_v = 0;
 		int max_index = 0;
 		for (int i = 0; i < 43; i++) {
-			if (V_output[i] > max_v) {
-				max_v = V_output[i];
+			if (average[i] > max_v) {
+				max_v = average[i];
 				max_index = i;
 			}
 		}
@@ -337,7 +339,7 @@ int main()
 		if ( "Stop" == sign )
 		{
 			cout << "This is the end." << endl;
-			go( 0 );
+			go( platform, 0 );
 			// When everything done, release the video capture object
 			cap.release();
 			break;
