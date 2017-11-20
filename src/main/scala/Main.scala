@@ -28,7 +28,9 @@ object ChiselMain {
     //chiselMainTest(args, () => Module(new DotProduct(75, 8))){c => new DotProductTests(c)}
     //chiselMainTest(args, () => Module(new ROM())){c => new ROMTests(c)}
     //chiselMainTest(args, () => Module(new Convolution(8, 4, 2))){c => new ConvolutionTests(c)}
-    chiselMainTest(args, () => Module(new WindowSelector())){c => new WindowSelectorTests(c)}
+    // chiselMainTest(args, () => Module(new WindowSelector())){c => new WindowSelectorTests(c)}
+    chiselMainTest(args, () => Module(new ConvolutionBuffer(3))){c => new ConvolutionBufferTests(c)}
+
   }
 }
 
