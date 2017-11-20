@@ -98,17 +98,21 @@ int main()
 
 	// Initialise array for output data
 	vector<float> average( VEC_SIZE );
+	fill( average.begin(), average.end(), 0 );
+
 	vector<float> weights( VEC_SIZE );
 	int i;
 	for ( i = 0; i < VEC_SIZE; ++i )
 	{
-		average[i] = 0.0;
+		// average[i] = 0.0;
 		if ( 2 == i || 4 == i || 7 == i || 14 == i || 17 == i || 33 == i || 34 == i )
 			weights[i] = 1.0;
 		else
 			weights[i] = 0.5
 	}
 
+
+	int count = 0;
 	while(1)
 	{
 		/* Read input from daughter card 
@@ -121,11 +125,18 @@ int main()
 
 
 		// POSSIBLY call image taking method and send to QNN
-
+		// camera_to_qnn( platform );
 		
+
 		// Get QNN output and find most likely sign
 		vector<float> output;
 		output = get_qnn_output( platform );
+
+		if ( 3 <= count++ )
+		{
+			count = 0;
+			fill( average.begin(), average.end(), 0 );
+		}
 		
 		int i;
 		for ( i = 0; i < VEC_SIZE; ++i )
