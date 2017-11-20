@@ -7,7 +7,7 @@
 #include "platform.h"
 #include "fpga_interfacing.hpp"
 
-namespace std;
+using namespace std;
 
 
 const int VEC_SIZE = 43;
