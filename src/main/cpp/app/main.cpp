@@ -81,7 +81,8 @@ Mat CropRegion(Mat image, Mat T, int limit)
   if (dArea > limit) {
     int posX = dM10 / dArea;
     int posY = dM01 / dArea;
-    int radius = sqrt(dArea/3)/9;
+    //int radius = sqrt(dArea/M_PI)/9;
+    int radius = sqrt(dArea/M_PI)/12;
     int x = posX-radius;
     int y = posY-radius;
     int s = 2*radius;
