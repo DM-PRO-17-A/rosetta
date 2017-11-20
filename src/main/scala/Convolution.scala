@@ -42,7 +42,7 @@ class Convolution(input_width: Int, windows: Int, filters: Int) extends RosettaA
       0 until filters foreach { f => {
           dot_products(w * filters + f).io.vec_1 := io.input_windows(w)
           dot_products(w * filters + f).io.vec_2 := io.input_windows(w) // to prevent NO DEFAULT SPECIFIED FOR WIRE errors
-          io.output(w * filters + f) := dot_products(w * filters + f).io.data_out
+          io.output(w * filters + f) := dot_products(w * filters + f).io.output_data
           }
         }
       }
