@@ -12,7 +12,6 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #include "math.h"
 
-
 using namespace std;
 
 
