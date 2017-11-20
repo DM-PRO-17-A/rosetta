@@ -105,7 +105,6 @@ Mat CropRegion(Mat image, Mat T, int limit)
   }
 }
 
-
 int Distance(Vec3b color1, Vec3b color2)
 {
   int r1 = color1.val[0];
@@ -130,37 +129,36 @@ Mat Preprocessing(Mat image, Vec3b red, Vec3b blue, int radii[2], int limit)
 
 int crop_and_send( WrapperRegDriver* platform, Mat frame )
 {
-	Mat cropped;
-    cropped = Preprocessing(frame, red, blue, radii, limit);
-    if (cropped.empty())
+	  Mat processed_image;
+    processed_image = Preprocessing(frame, red, blue, radii, limit);
+    if (processed_image.empty())
       return -1;
-    if (cropped.rows < 5) {
-		cropped.release();
-		Mat crop(32, 32, CV_8UC3, Scalar(0,0,0));
-		imshow("Cropped", crop);
+    if (processed_image.rows < 5) {
+		  processed.release();
+		  Mat output(32, 32, CV_8UC3, Scalar(0,0,0));
+		  imshow("Cropped", output);
     }
     else {
-		Mat crop;
-		resize(cropped, crop, cvSize(32, 32), 0, 0, CV_INTER_AREA );
-
-		// Convert to RGB
-		cvtColor(frame, frame, cv::COLOR_BGR2RGB);
-
-		//imwrite(name, cropped);
-		//imshow("Cropped", crop);
-		vector<int> V;
-		if (crop.isContinuous()) {
-			V.assign(crop.datastart, crop.dataend);
-		} 
-		else {
-			for (int i = 0; i < crop.rows; ++i) {
-				V.insert(V.end(), crop.ptr<uchar>(i), crop.ptr<uchar>(i)+crop.cols);
-			}
-		}
-
-    set_qnn_input(platform, V);
-    return 0;
-	}
+      Mat output;
+      resize(processed, output, cvSize(32, 32), 0, 0, CV_INTER_AREA );
+      rotate(output, output, ROTATE_90_COUNTERCLOCKWISE);
+      // Convert to RGB???
+      cvtColor(output, output, cv::COLOR_BGR2RGB);
+      //imwrite(name, output);
+      //imshow("Cropped", output);
+      vector<int> V;
+      if (output.isContinuous()) {
+        V.assign(output.datastart, output.dataend);
+      } 
+    else {
+      for (int i = 0; i < output.rows; ++i) {
+        V.insert(V.end(), output.ptr<uchar>(i), output.ptr<uchar>(i)+output.cols);
+      }
+    }
+  }
+  set_qnn_input(platform, V);
+  return 0;
+}
 }
 // Camera majics end
 // ********************
