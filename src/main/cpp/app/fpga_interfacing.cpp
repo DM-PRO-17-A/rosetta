@@ -18,6 +18,9 @@ using namespace std;
 
 void set_qnn_input(WrapperRegDriver* platform, vector<int> image){
   AutoSimple a(platform);
+  if(a.get_full() == 1){
+    return;
+  }
   for (int i = 0; i < 3072; i += 32) {
     a.set_input_data_0(image[i]);
     a.set_input_data_1(image[i+1]);
@@ -60,7 +63,9 @@ vector<int> get_qnn_data(WrapperRegDriver * platform) {
   AutoSimple a(platform);
   vector<int> vec(43);
 
-  while(a.get_empty() != 0){};
+  if(a.get_empty() == 1){
+    return vector<int>();
+  }
 
   a.set_output_pulse(1);
   a.set_output_pulse(0);
