@@ -8,7 +8,7 @@ class ConvolutionBuffer(output_width: Int) extends RosettaAccelerator {
   val io = new RosettaAcceleratorIF(numMemPorts) {
     val input = Decoupled(Bits(INPUT, 1)).flip
 
-    val output = Decoupled(Bits(OUTPUT, output_width))
+    val output = Decoupled(Bits(OUTPUT, width=output_width))
   }
 
   io.output.valid := Bool(false)
@@ -17,7 +17,7 @@ class ConvolutionBuffer(output_width: Int) extends RosettaAccelerator {
   val ready :: valid :: Nil = Enum(UInt(), 2) // Sexy
   val state = Reg(init = ready)
 
-  val output_reg = Reg(init=Bits(1, width=output_width))
+  val output_reg = Reg(init=Bits(0, width=output_width))
   io.output.bits := output_reg
   val counter = Reg(init=UInt(0, width=output_width))
 
@@ -30,8 +30,7 @@ class ConvolutionBuffer(output_width: Int) extends RosettaAccelerator {
     }
 
     is (ready) {
-      printf("its ready")
-      output_reg := output_reg << io.input.bits
+      output_reg := Cat(output_reg, io.input.bits)
       counter := counter + UInt(1)
       when (counter === UInt(output_width - 1)) {
         state := valid
@@ -45,18 +44,26 @@ class ConvolutionBuffer(output_width: Int) extends RosettaAccelerator {
 class ConvolutionBufferTests(c: ConvolutionBuffer) extends Tester(c) {
   val test = BigInt(1)
   val test2 = BigInt(0)
-  val test3 = BigInt(0)
+  val test3 = BigInt(1)
+  val test4 = BigInt(0)
 
   poke(c.io.input.bits, test)
   step(1)
+  peek(c.output_reg)
 
   poke(c.io.input.bits, test2)
   step(1)
+  peek(c.output_reg)
 
   poke(c.io.input.bits, test3)
   step(1)
-
-  peek(c.io.output.bits)
   peek(c.output_reg)
+
+  poke(c.io.input.bits, test3)
+  step(1)
+  peek(c.output_reg)
+
+  peek(c.io.output)
+
 
 }
