@@ -114,10 +114,15 @@ vector<int> get_qnn_data(WrapperRegDriver * platform) {
 
 void set_output_pins(WrapperRegDriver* platform, vector<int> pins) {
   AutoSimple a(platform);
-  a.set_out_pins_0(pins[0]);
-  a.set_out_pins_1(pins[1]);
-  a.set_out_pins_2(pins[2]);
-  a.set_out_pins_3(pins[3]);
+  a.set_out_pins_0(pins[3]);
+  a.set_out_pins_1(pins[2]);
+  a.set_out_pins_2(pins[1]);
+  a.set_out_pins_3(pins[0]);
+}
+
+void go(WrapperRegDriver* platform, int go_val) {
+  AutoSimple a(platform);
+  a.set_pcb_go(go_val);
 }
 
 vector<int> get_input_pins(WrapperRegDriver* platform) {
@@ -128,6 +133,17 @@ vector<int> get_input_pins(WrapperRegDriver* platform) {
   pins[1] = a.get_in_pins_1();
 
   return pins;
+}
+
+vector<int> get_pcb_btns(WrapperRegDriver* platform) {
+  AutoSimple a(platform);
+  vector<int> btns(4);
+
+  btns[0] = a.get_pcb_btn_0();
+  btns[1] = a.get_pcb_btn_1();
+  btns[2] = a.get_pcb_btn_2();
+
+  return btns;
 }
 
 vector<float> scaleshift(vector<int> pointer) {

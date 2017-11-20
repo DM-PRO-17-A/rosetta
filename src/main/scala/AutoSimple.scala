@@ -24,16 +24,21 @@ class AutoSimple(kernels_path1: String, kernels_path2: String) extends RosettaAc
     val empty = Bool(OUTPUT)
     val full = Bool(OUTPUT)
 
-    // GPIO pins
     val out_pins = Vec.fill(4){UInt(INPUT, width=1)}
+    val pcb_go = UInt(INPUT, width=1)
     val in_pins = Vec.fill(2){UInt(OUTPUT, width=1)}
-    val pcb_btn = UInt(OUTPUT, width=1)
+    val pcb_btn = Vec.fill(3){UInt(OUTPUT, width=1)}
   }
 
-  val GPIO = Module(new GPIOPins()).io
-  io.out_pins <> GPIO.out_pins
-  io.in_pins <> GPIO.in_pins
-  io.pcb_btn <> GPIO.pcb_btn
+  io.ck_out := Cat(io.out_pins(0), Cat(io.out_pins(1), Cat(io.out_pins(2), Cat(io.out_pins(3)))))
+  io.ck_go := io.pcb_go
+
+  io.in_pins(0) := io.ck_in(1)
+  io.in_pins(1) := io.ck_in(0)
+
+  io.pcb_btn(0) := io.pbtn(2)
+  io.pcb_btn(1) := io.pbtn(1)
+  io.pcb_btn(2) := io.pbtn(0)
 
   val IQ = Module(new ImageQueue(input_width, 128, input_per_it)) // 128 * input_size numbers
   IQ.io.input_data <> io.input_data
