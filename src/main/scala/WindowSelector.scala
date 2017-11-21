@@ -17,12 +17,12 @@ class WindowSelector() extends RosettaAccelerator {
 
   val input_width = input_dim * channels * width
   val filter_row_width = filter_dim * channels * width
-  val output_width = filter_dim * filter_dim * channels * width
+  val output_width = filter_dim * channels * width // one row of 6*6*3
 
   val io = new RosettaAcceleratorIF(numMemPorts) {
     val input = Decoupled(Bits(INPUT, input_width)).flip // one row from the 32*32*3 img
 
-    val output = Decoupled(Bits(OUTPUT, output_width)) // one window, 5*5*3
+    val output = Decoupled(Vec.fill(filter_dim){Bits(OUTPUT, output_width)}) // one window, 6*6*3
   }
   io.input.ready := Bool(true)
   io.output.valid := Bool(false)
@@ -43,7 +43,9 @@ class WindowSelector() extends RosettaAccelerator {
     for (x_i <- 0 until 14) {
       is (UInt(x_i)) {
         val offset = x_i * pixel_width * 2
-        io.output.bits := (filter_dim-1 to 0 by -1).map(i => rows(i)(x_start - offset, x_end - offset)).foldLeft(Bits(width=output_width)){ (a, b) => Cat(a,b) }
+        for (i <- filter_dim-1 to 0 by -1) {
+          io.output.bits(i) := rows(i)(x_start - offset, x_end - offset)
+        }
       }
     }
   }
@@ -144,7 +146,9 @@ class WindowSelectorTests(c: WindowSelector) extends Tester(c) {
       for (x_i <- 0 until 14) {
         poke(c.io.output.ready, 0)
         step(1)
-        expect(c.io.output.bits, BigInt((0 until filter_dim).map(i => input(i+y_i*2).slice(3*8*x_i*2, 6*3*8 + 3*8*x_i*2)).mkString, 2))
+        for (i <- 0 until filter_dim) {
+          expect(c.io.output.bits(i), BigInt(input(i+y_i*2).slice(3*8*x_i*2, 6*3*8 + 3*8*x_i*2).mkString, 2))
+        }
         poke(c.io.output.ready, 1)
         step(1)
       }
@@ -166,7 +170,9 @@ class WindowSelectorTests(c: WindowSelector) extends Tester(c) {
       for (x_i <- 0 until 14) {
         poke(c.io.output.ready, 1)
         step(1)
-        expect(c.io.output.bits, BigInt((0 until filter_dim).map(i => input(i+y_i*2).slice(3*8*x_i*2, 6*3*8 + 3*8*x_i*2)).mkString, 2))
+        for (i <- 0 until filter_dim) {
+          expect(c.io.output.bits(i), BigInt(input(i+y_i*2).slice(3*8*x_i*2, 6*3*8 + 3*8*x_i*2).mkString, 2))
+        }
         poke(c.io.output.ready, 0)
         step(1)
       }

@@ -7,9 +7,9 @@ import fpgatidbits.ocm._
 class OutputQueue(dataWidth: Int, queueDepth: Int, vec_fill_size: Int) extends RosettaAccelerator {
     val numMemPorts = 0
     val io = new RosettaAcceleratorIF(numMemPorts) {
-        val input = Flipped(Decoupled(Bits(INPUT, width=dataWidth)))
+        val input = Flipped(Decoupled(Vec.fill(vec_fill_size){Bits(INPUT, width=dataWidth)}))
 
-        val output_data = Bits(OUTPUT, dataWidth)
+        val output_data = Vec.fill(vec_fill_size){Bits(OUTPUT, dataWidth)}
         val output_pulse = Bool(INPUT)
 
         val empty = Bool(OUTPUT)
@@ -18,9 +18,9 @@ class OutputQueue(dataWidth: Int, queueDepth: Int, vec_fill_size: Int) extends R
     }
 
     val pulse_reg = Reg(init=Bool(false), next=io.output_pulse)
-    val queue = Module(new FPGAQueue(UInt(width=dataWidth), queueDepth))
+    val queue = Module(new FPGAQueue(Vec.fill(vec_fill_size){UInt(width=dataWidth)}, queueDepth))
     val output_ready = (!io.output_pulse && pulse_reg)
-    val output_reg = Reg(init=UInt(width=dataWidth))
+    val output_reg = Reg(init=Vec.fill(vec_fill_size){UInt(width=dataWidth)})
 
     queue.io.enq <> io.input
     io.empty := (queue.io.count === UInt(0))
