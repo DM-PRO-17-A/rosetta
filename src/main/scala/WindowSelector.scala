@@ -50,8 +50,9 @@ class WindowSelector() extends RosettaAccelerator {
 
   switch (state) {
     is (init) {
+      io.output.valid := Bool(false)
+      io.input.ready := Bool(true)
       when (io.input.valid) {
-        io.input.ready := Bool(false)
         rows(0) := io.input.bits
         for (r <- 1 until filter_dim) {
           rows(r) := rows(r - 1)
@@ -62,61 +63,45 @@ class WindowSelector() extends RosettaAccelerator {
           state := valid
           io.input.ready := Bool(false)
         }
-      } .otherwise {
-        io.input.ready := Bool(true)
       }
     }
 
     is (ready) {
+      io.output.valid := Bool(false)
+      io.input.ready := Bool(true)
       when (io.input.valid) {
+
         rows(0) := io.input.bits
         for (r <- 1 until filter_dim) {
           rows(r) := rows(r - 1)
         }
         row_counter := row_counter + UInt(1)
+        next_input := next_input + UInt(1)
 
         when (next_input === UInt(stride - 1)) {
           io.input.ready := Bool(false)
           x_pos := UInt(0)
           state := valid
-        } .otherwise {
-          io.input.ready := Bool(true)
-          next_input := next_input + UInt(1)
         }
-      } .otherwise {
-        io.input.ready := Bool(true)
       }
     }
 
-    is (inc) {
-      io.output.valid := Bool(true)
-      when (io.output.ready) {
-        x_pos := x_pos + UInt(1)
-      } .otherwise {
-        state := valid
-      }
-    }
 
     is (valid) {
+      io.output.valid := Bool(true)
+      io.input.ready := Bool(false)
       when (io.output.ready) {
-        io.output.valid := Bool(false)
-        state := inc
-        x_pos := x_pos + UInt(1)
-
         when (x_pos === UInt(output_dim - 1)) {
           when (row_counter === UInt(output_width - 1)) {
             state := init
           } .otherwise {
             state := ready
             next_input := UInt(0)
+            io.input.ready := Bool(true)
           }
         } .otherwise {
-          io.output.valid := Bool(false)
-          state := inc
+          x_pos := x_pos + UInt(1)
         }
-
-      } .otherwise {
-        io.output.valid := Bool(true)
       }
     }
   }
@@ -179,10 +164,10 @@ class WindowSelectorTests(c: WindowSelector) extends Tester(c) {
         expect(c.rows(filter_dim - 1 - k), BigInt(input(k).mkString, 2))
       }
       for (x_i <- 0 until 14) {
-        poke(c.io.output.ready, 0)
+        poke(c.io.output.ready, 1)
         step(1)
         expect(c.io.output.bits, BigInt((0 until filter_dim).map(i => input(i+y_i*2).slice(3*8*x_i*2, 6*3*8 + 3*8*x_i*2)).mkString, 2))
-        poke(c.io.output.ready, 1)
+        poke(c.io.output.ready, 0)
         step(1)
       }
     }
