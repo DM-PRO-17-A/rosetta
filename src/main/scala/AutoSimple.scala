@@ -68,11 +68,12 @@ class AutoSimpleTest(c: AutoSimple) extends Tester(c) {
         scala.io.Source.fromInputStream(this.getClass.getResourceAsStream(path)).getLines.toArray
     }
 
-    val input           = LoadResource("/test_data/mult_images.txt").map(line => line.split(" ").map(s => BigInt(s.toInt)).toArray).toArray
-    val fc_1_weights    = LoadResource("/test_data/fc1_gbr.txt").map(kernel => kernel.split(" ").map(s => s.toInt * 2 -1))
+    //val input           = LoadResource("/test_data/mult_images.txt").map(line => line.split(" ").map(s => BigInt(s.toInt)).toArray).toArray
+    val input           = LoadResource("/test_data/input.txt").map(line => line.split(" ").map(s => BigInt(s.toInt)).toArray).toArray
+    val fc_1_weights    = LoadResource("/test_data/fc1.txt").map(kernel => kernel.split(" ").map(s => s.toInt * 2 -1))
     val fc_2_weights    = LoadResource("/test_data/fc2.txt").map(kernel => kernel.split(" ").map(s => s.toInt * 2 -1))
-    val thresholds      = LoadResource("/test_data/thresholds.txt").map(t => t.split(", ").map(_.toInt)).toArray.head
-    val expected_output = LoadResource("/test_data/mult_images_res.txt").map(line => line.split(" ").map(s => BigInt(s.toInt)).toArray).toArray
+    val thresholds      = LoadResource("/test_data/bt.txt").map(t => t.split(" ").map(_.toInt)).toArray.head
+    val expected_output = LoadResource("/test_data/result.txt").map(line => line.split(" ").map(s => BigInt(s.toInt)).toArray).toArray
 
     val images                = input.length
     println(images)
@@ -97,7 +98,7 @@ class AutoSimpleTest(c: AutoSimple) extends Tester(c) {
     }
 
     // Insert image into IQ
-    for (n <- 0 until images) {
+    for (n <- 0 until 1) {
       val offset = 0
       for (i <- 0 until weights_length by input_size) {
         while (peek(c.io.full) == 1) {
@@ -117,7 +118,7 @@ class AutoSimpleTest(c: AutoSimple) extends Tester(c) {
     peek(c.FC1.state)
     peek(c.FC1.kernel_step)
 
-    for (n <- 0 until images) {
+    for (n <- 0 until 1) {
       poke(c.io.output_pulse, 1)
       step(1)
       poke(c.io.output_pulse, 0)
@@ -125,7 +126,7 @@ class AutoSimpleTest(c: AutoSimple) extends Tester(c) {
       //val FC_N_Output = FC1_Result(n)
       val res = result_n(n)
       for (k <- 0 until 43) {
-        //expect(c.io.output_data(k), expected_output(n)(k))
+        expect(c.io.output_data(k), expected_output(n)(k))
         expect(c.io.output_data(k), res(k))
       }
     }

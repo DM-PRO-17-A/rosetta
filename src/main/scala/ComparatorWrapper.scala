@@ -14,8 +14,8 @@ class ComparatorWrapper(dataWidth: Int, valuesPerIteration: Int) extends Rosetta
   io.output.valid := io.input.valid
   io.input.ready := io.output.ready
 
-  val thresholds = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/test_data/thresholds.txt")).getLines.toArray
-  val t = Vec(thresholds(0).split(", ").map(f => SInt(f.toInt, width = 12)))
+  val thresholds = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/test_data/bt.txt")).getLines.toArray
+  val t = Vec(thresholds(0).split(" ").map(f => SInt(f.toInt, width = 12)))
 
   // sets all values in output to be 0, NECESSARY to avoid error
   for(i <- 0 to valuesPerIteration) {
