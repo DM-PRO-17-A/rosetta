@@ -7,17 +7,17 @@ import fpgatidbits.ocm._
 class ImageQueue(dataWidth: Int, queueDepth: Int, vec_fill_size: Int) extends RosettaAccelerator {
     val numMemPorts = 0
     val io = new RosettaAcceleratorIF(numMemPorts) {
-        val input_data = Vec.fill(vec_fill_size){UInt(INPUT, width=dataWidth)}
+        val input_data = UInt(INPUT, width=dataWidth)
         val input_pulse = Bool(INPUT)
 
-        val output = Decoupled(Vec.fill(vec_fill_size){UInt(OUTPUT, dataWidth)})
+        val output = Decoupled(UInt(OUTPUT, dataWidth))
         val full = Bool(OUTPUT)
         val empty = Bool(OUTPUT)
 
     }
 
     val pulse_reg = Reg(next=io.input_pulse)
-    val queue = Module(new FPGAQueue(Vec.fill(vec_fill_size){UInt(width=dataWidth)}, queueDepth))
+    val queue = Module(new FPGAQueue(UInt(width=dataWidth), queueDepth))
 
     queue.io.enq.valid := !io.input_pulse && pulse_reg
     queue.io.enq.bits := io.input_data
@@ -31,7 +31,7 @@ class ImageQueue(dataWidth: Int, queueDepth: Int, vec_fill_size: Int) extends Ro
 class ImageQueueTests(c: ImageQueue) extends Tester(c) {
   val input_data = Array(1,2,3,4,5,6,7,8).map(BigInt(_))
   // Poke input_data & pulse to 1 and step(1)
-  poke(c.io.input_data, input_data)
+  poke(c.io.input_data, input_data(0))
   poke(c.io.input_pulse, 1)
 
   expect(c.io.empty, 1)
