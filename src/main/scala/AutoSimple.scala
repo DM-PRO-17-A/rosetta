@@ -7,7 +7,7 @@ class AutoSimple(kernels_path1: String, kernels_path2: String) extends RosettaAc
 
   val input_width = 8
 
-  val kernels_per_it = 4
+  val kernels_per_it = 32
   val kernels_length = 256
 
   val input_per_it = 32
@@ -68,14 +68,14 @@ class AutoSimpleTest(c: AutoSimple) extends Tester(c) {
         scala.io.Source.fromInputStream(this.getClass.getResourceAsStream(path)).getLines.toArray
     }
 
-    val input           = LoadResource("/test_data/fc1input60.txt").head.split(" ").map(s => BigInt(s.toInt))
-    val fc_1_weights    = LoadResource("/test_data/fc1.txt").map(kernel => kernel.split(" ").map(s => s.toInt * 2 -1))
+    val input           = LoadResource("/test_data/test_img_raw.txt").head.split(" ").map(s => BigInt(s.toInt))
+    val fc_1_weights    = LoadResource("/test_data/fc1_gbr.txt").map(kernel => kernel.split(" ").map(s => s.toInt * 2 -1))
     val fc_2_weights    = LoadResource("/test_data/fc2.txt").map(kernel => kernel.split(" ").map(s => s.toInt * 2 -1))
     val thresholds      = LoadResource("/test_data/thresholds.txt").map(t => t.split(", ").map(_.toInt)).toArray.head
-    val expected_output = LoadResource("/test_data/fc2output60.txt").head.split(" ").map(s => BigInt(s.toInt))
+    val expected_output = LoadResource("/test_data/test_img_out.txt").head.split(" ").map(s => BigInt(s.toInt))
 
     val images                = 1
-    val kernels_per_iteration = 4
+    val kernels_per_iteration = 32
     val kernels_length        = 256
     val input_size            = 32
     val weights_length        = 3072
@@ -134,6 +134,7 @@ class AutoSimpleTest(c: AutoSimple) extends Tester(c) {
       val FC_N_Output = FC1_Result(n)
       for (k <- 0 until 43) {
         expect(c.io.output_data(k), fc_2(k))
+        expect(c.io.output_data(k), expected_output(k))
       }
       n += 1
       step(1)
