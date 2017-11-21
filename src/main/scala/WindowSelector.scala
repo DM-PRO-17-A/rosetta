@@ -43,8 +43,8 @@ class WindowSelector() extends RosettaAccelerator {
     for (x_i <- 0 until 14) {
       is (UInt(x_i)) {
         val offset = x_i * pixel_width * 2
-        for (i <- filter_dim-1 to 0 by -1) {
-          io.output.bits(i) := rows(i)(x_start - offset, x_end - offset)
+        for (i <- 0 to filter_dim - 1) {
+          io.output.bits(i) := rows(filter_dim - 1 - i)(x_start - offset, x_end - offset)
         }
       }
     }
