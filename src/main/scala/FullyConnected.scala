@@ -57,12 +57,13 @@ class FullyConnected(kernels_path: String, kernels_length: Int, weights_length: 
           weight_step := UInt(0)
           kernel_step := UInt(0)
           state := waiting
+          io.input.ready := Bool(true)
         }
       }
       is (waiting) {
-        io.input.ready := Bool(true)
+        io.output.valid := Bool(false)
+        io.input.ready := Bool(false)
         when (io.input.valid) {
-          io.input.ready := Bool(false)
           state := calc
           kernel_step := UInt(0)
         }
@@ -70,8 +71,10 @@ class FullyConnected(kernels_path: String, kernels_length: Int, weights_length: 
       is (calc) {
         when (kernel_step === UInt(kernel_steps)) {
           when (weight_step === UInt(weight_steps - 1)) {
+            io.input.ready := Bool(false)
             state := done
           } .otherwise {
+            io.input.ready := Bool(true)
             state := waiting
           }
           weight_step := weight_step + UInt(1)
@@ -97,22 +100,33 @@ class FullyConnected(kernels_path: String, kernels_length: Int, weights_length: 
 }
 
 class FullyConnectedTests(c: FullyConnected) extends Tester(c) {
-    val input = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/test_data/fc1input60.txt")).getLines.toArray.head.split(" ").map(s => BigInt(s.toInt))
-    val kernels = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/test_data/fc1.txt")).getLines.toArray.map(kernel => kernel.split(" ").map(s => s.toInt * 2 -1))
+    def LoadResource(path: String) : Array[String] = {
+        scala.io.Source.fromInputStream(this.getClass.getResourceAsStream(path)).getLines.toArray
+    }
 
-    val input_size = 64
-    val weights_length = 1024
-    val kernels_per_iteration = 32
-    val kernels_length = 64
+    val input           = LoadResource("/test_data/mult_images.txt").map(line => line.split(" ").map(s => BigInt(s.toInt)).toArray).toArray
+    val kernels         = LoadResource("/test_data/fc1_gbr.txt").map(kernel => kernel.split(" ").map(s => s.toInt * 2 - 1))
 
-    for (image <- 0 until 2) {
+    def result_n(n: Int) : Array[BigInt] = {
+      val fc_1 = kernels.map(kernel => (input(n).slice(0, weights_length) zip kernel.slice(0, weights_length))
+        .map{case (i1: BigInt, i2: Int) => i1*i2}.reduceLeft(_ + _)
+      )
+      return fc_1
+    }
+
+    val input_size = 32
+    val weights_length = 3072
+    val kernels_per_iteration = 16
+    val kernels_length = 256
+
+    for (image <- 0 until input.length) {
         poke(c.io.output.ready, 1) // The next component is ready
         step(1)
         for (k <- 0 until kernels_length) {
           expect(c.io.output.bits(k), 0)
         }
         for (i <- 0 until weights_length by input_size) {
-            poke(c.io.input.bits, input.slice(i, i + input_size))
+            poke(c.io.input.bits, input(image).slice(i, i + input_size))
             poke(c.io.input.valid, 1)
             step(1)
 
@@ -127,7 +141,7 @@ class FullyConnectedTests(c: FullyConnected) extends Tester(c) {
 
             for (k <- 0 until kernels_length by kernels_per_iteration) {
                 for (k_i <- 0 until kernels_per_iteration) {
-                    expect(c.io.output.bits(k + k_i), (input.slice(0, i+input_size) zip kernels(k + k_i).slice(0, i+input_size)).map{case (i1: BigInt, i2: Int) => i1*i2}.reduceLeft(_ + _))
+                    expect(c.io.output.bits(k + k_i), (input(image).slice(0, i+input_size) zip kernels(k + k_i).slice(0, i+input_size)).map{case (i1: BigInt, i2: Int) => i1*i2}.reduceLeft(_ + _))
                 }
             }
             step(1)

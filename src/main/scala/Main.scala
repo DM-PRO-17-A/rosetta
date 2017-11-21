@@ -20,9 +20,9 @@ object ChiselMain {
     //chiselMainTest(args, () => Module(new Comparator(8))){c => new ComparatorTest(c)}
     //chiselMainTest(args, () => Module(new ComparatorWrapper(12, 256))){c => new ComparatorWrapperTest(c)}
     //chiselMainTest(args, () => Module(new ROM())){c => new ROMTests(c)}
-    //chiselMainTest(args, () => Module(new AutoSimple("/test_data/fc1_gbr.txt", "/test_data/fc2.txt"))){c => new AutoSimpleTest(c)}
+    chiselMainTest(args, () => Module(new AutoSimple("/test_data/fc1_gbr.txt", "/test_data/fc2.txt"))){c => new AutoSimpleTest(c)}
     //chiselMainTest(args, () => Module(new DotProduct(5, 8))){c => new DotProductTests(c)}
-    //chiselMainTest(args, () => Module(new FullyConnected("/test_data/fc1.txt", 64, 1024, 32, 64, 8))){c => new FullyConnectedTests(c)}
+    //chiselMainTest(args, () => Module(new FullyConnected("/test_data/fc1_gbr.txt", 256, 3072, 16, 32, 8))){c => new FullyConnectedTests(c)}
     //chiselMainTest(args, () => Module(new ImageQueue(8, 128, 32))){c => new ImageQueueTests(c)}
   }
 }

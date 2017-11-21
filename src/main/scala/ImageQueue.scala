@@ -22,7 +22,7 @@ class ImageQueue(dataWidth: Int, queueDepth: Int, vec_fill_size: Int) extends Ro
     queue.io.enq.valid := !io.input_pulse && pulse_reg
     queue.io.enq.bits := io.input_data
 
-    io.full := (queue.io.count === UInt(queueDepth -1))
+    io.full := (queue.io.count >= UInt(queueDepth - 5))
     io.empty := (queue.io.count === UInt(0))
 
     io.output <> queue.io.deq
