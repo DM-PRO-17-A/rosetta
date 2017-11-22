@@ -166,24 +166,32 @@ int crop_and_send( WrapperRegDriver* platform, Mat frame )
 
 
 vector<int> speed = {0, 1};
-vector<int> old_sign = {0, 0};
+vector<int> old_signal = {0, 1, 0, 0};
 
-vector<int> get_signal( std::string sign )
+vector<int> get_signal( std::string sign, float p )
 {
 	vector<int> signal(4);
+  if(p < 0.8) { 
+		signal[0] = speed[0];
+		signal[1] = speed[1];
+		signal[2] = old_signal[2];
+		signal[3] = old_signal[3];
+    old_signal = signal;
+    return signal;
+  } 
 	if ( "50 Km/h" == sign )
 	{
-		signal = {0, 1, 0, 0};
+		signal = {0, 1, old_signal[2], old_signal[3]};
 		speed = {1, 0};
 	}
 	else if ( "70 Km/h" == sign )
 	{
-		signal = {1, 0, 0, 0};
+		signal = {1, 0, old_signal[2], old_signal[3]};
 		speed = {0, 1};
 	}
 	else if ( "100 Km/h" == sign )
 	{
-		signal = {1, 1, 0, 0};
+		signal = {1, 1, old_signal[2], old_signal[3]};
 		speed = {1, 1};
 	}
 	else if ( "Turn right ahead" == sign )
@@ -216,11 +224,25 @@ vector<int> get_signal( std::string sign )
 	{
 		signal[0] = speed[0];
 		signal[1] = speed[1];
-		signal[2] = old_signal[0];
-		signal[3] = old_signal[1];
+		signal[2] = old_signal[2];
+		signal[3] = old_signal[3];
+    
+    for( int i = 0; i < 4; ++i )
+    {
+      cout << signal[i] << " ";
+    }
+    cout << endl;
+    
 		return signal;
 	}
 	old_signal = signal;
+
+  for( int i = 0; i < 4; ++i )
+  {
+    cout << signal[i] << " ";
+  }
+  cout << endl;
+
 	return signal;
 }
 
@@ -251,7 +273,7 @@ int main()
 
 
 	// Wait until start button on PCB is pressed
-	while ( 1 == get_pcb_btns(platform)[0] );
+	while ( 0 == get_pcb_btns(platform)[0] );
 	go( platform, 1 );
 	
 
@@ -288,6 +310,10 @@ int main()
 		if ( frame.empty() )
 			continue;
 
+		int ch = 180;
+		int cw = 216;
+    frame = frame(Rect(cw, 0, cw, ch));
+  
 		if(crop_and_send ( platform, frame ) == -1)
 			continue;
 		
@@ -327,27 +353,28 @@ int main()
 			}
 		}
 		std::string sign = gtsrb_classes[max_index];
-		// cout << sign << " - " << max_v << endl;
+		cout << sign << " - " << max_v << endl;
 		vector<int> signal(4);
-		signal = get_signal( sign );
+		signal = get_signal( sign, max_v );
 		// If the robot is at a crossroads, tell it what to do
-		if ( 1 == input[0] )
+		if ( 1 == input[1] )
 			set_output_pins( platform, signal );
 		else
 		{
-			signal = { speed[0], speed[0], 0, 0 };
+			//signal = { speed[0], speed[0], 0, 0 };
+			signal = {speed[0], speed[1], signal[2], signal[3]};
 			set_output_pins( platform, signal );
 		}
 	
 	
 		// Stop the program in its entirety
-		if ( "Stop" == sign )
+		if ( "Stop" == sign && max_v > 0.8)
 		{
 			cout << "This is the end." << endl;
-			go( platform, 0 );
+			//go( platform, 0 );
 			// When everything done, release the video capture object
-			cap.release();
-			break;
+			//cap.release();
+			//break;
 		}
 	}
 	
