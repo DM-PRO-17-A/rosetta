@@ -131,36 +131,35 @@ Mat Preprocessing(Mat image, Vec3b red, Vec3b blue, int radii[2], int limit)
 int crop_and_send( WrapperRegDriver* platform, Mat frame )
 {
 	Mat cropped;
-    cropped = Preprocessing(frame, red, blue, radii, limit);
-    if (cropped.empty())
-      return -1;
-    if (cropped.rows < 5) {
-		cropped.release();
-		Mat crop(32, 32, CV_8UC3, Scalar(0,0,0));
-		imshow("Cropped", crop);
-    }
+  cropped = Preprocessing(frame, red, blue, radii, limit);
+  if (cropped.empty())
+    return -1;
+  if (cropped.rows < 5) {
+    cropped.release();
+    Mat crop(32, 32, CV_8UC3, Scalar(0,0,0));
+  }
+  else {
+    Mat crop;
+    resize(cropped, crop, cvSize(32, 32), 0, 0, CV_INTER_AREA );
+
+    /*
+    crop = crop.t();
+    flip(crop, crop, 0);
+    */
+
+    vector<int> V(3072);
+    if (crop.isContinuous()) {
+      V.assign(crop.datastart, crop.dataend);
+    } 
     else {
-		Mat crop;
-		resize(cropped, crop, cvSize(32, 32), 0, 0, CV_INTER_AREA );
-
-		// Convert to RGB
-		cvtColor(frame, frame, cv::COLOR_BGR2RGB);
-
-		//imwrite(name, cropped);
-		//imshow("Cropped", crop);
-		vector<int> V;
-		if (crop.isContinuous()) {
-			V.assign(crop.datastart, crop.dataend);
-		} 
-		else {
-			for (int i = 0; i < crop.rows; ++i) {
-				V.insert(V.end(), crop.ptr<uchar>(i), crop.ptr<uchar>(i)+crop.cols);
-			}
-		}
+      for (int i = 0; i < crop.rows; ++i) {
+        V.insert(V.end(), crop.ptr<uchar>(i), crop.ptr<uchar>(i)+crop.cols);
+      }
+    }
 
     set_qnn_input(platform, V);
     return 0;
-	}
+  }
 }
 // Camera majics end
 // ********************
@@ -274,7 +273,7 @@ int main()
 		/* Read input from daughter card 
 		 * If busy, don't process and send new data
 		 */
-		vector<int> input;
+		vector<int> input(2);
 		input = get_input_pins( platform );
 		if ( 1 == input[1] )
 			continue;
@@ -292,16 +291,18 @@ int main()
 
 		
 		// Get QNN output and find most likely sign
-		vector<float> output;
+		vector<float> output(43);
 		output = get_qnn_output( platform );
     if(output.empty())
       continue;
 
+/*
 		if ( 3 <= count++ )
 		{
 			count = 0;
 			fill( average.begin(), average.end(), 0 );
 		}
+*/
 		
 		int i;
 		for ( i = 0; i < VEC_SIZE; ++i )
@@ -317,13 +318,14 @@ int main()
 		float max_v = 0;
 		int max_index = 0;
 		for (int i = 0; i < 43; i++) {
-			if (average[i] > max_v) {
-				max_v = average[i];
+			if (output[i] > max_v) {
+				max_v = output[i];
 				max_index = i;
 			}
 		}
 		std::string sign = gtsrb_classes[max_index];
-		vector<int> signal;
+		cout << sign << " - " << max_v << endl;
+		vector<int> signal(4);
 		signal = get_signal( sign );
 		// If the robot is at a crossroads, tell it what to do
 		if ( 1 == input[0] )

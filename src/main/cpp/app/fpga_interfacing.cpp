@@ -64,7 +64,7 @@ vector<int> get_qnn_data(WrapperRegDriver * platform) {
   vector<int> vec(43);
 
   if(a.get_empty() == 1){
-    return vector<int>();
+    return vector<int>(43);
   }
 
   a.set_output_pulse(1);
